@@ -24,7 +24,7 @@ namespace SimpleSynth.Synths
             this.HarmonicCount = harmonicCount;
             this.AllHarmonics = allHarmonics;
 
-            this.Segments = GetSegments();
+            this.Segments = GetSegments(); // this MUST be called here and NOT in the base class because HarmonicCount and AllHarmonics need to be initialized
         }
 
         // implementation is used by the base class

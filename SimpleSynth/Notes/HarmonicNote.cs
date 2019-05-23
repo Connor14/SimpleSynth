@@ -17,7 +17,7 @@ namespace SimpleSynth.Notes
             AllHarmonics = allHarmonics;
         }
 
-        public override DiscreteSignal GetSignalMix()
+        protected override DiscreteSignal GetSignalMix()
         {
             double frequency = SynthUtils.NoteToFrequency(this.Note);
 

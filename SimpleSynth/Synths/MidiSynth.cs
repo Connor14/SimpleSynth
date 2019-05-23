@@ -7,10 +7,12 @@ using NWaves.Filters;
 using NWaves.Signals;
 using SimpleSynth.Notes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SimpleSynth.Synths
 {
@@ -72,12 +74,24 @@ namespace SimpleSynth.Synths
 
         protected abstract List<NoteSegment> GetSegments();
 
+        object lockObject = new object();
+
         public MemoryStream GenerateWAV()
         {
+            // generate signals in parallel
+            // Russian Food.mid is about 2-3 seconds vs about 6-7 seconds previously @ 5 harmonic intervals with ALL harmonics and ADSR
+            //      10 @ 3.6 vs 12.5
+            //      20 @ 6.5 and 25
+            // connor.mid: 2-3 vs 6-7
+            // ancient history.mid: 1-2 vs 4-5
+            Parallel.ForEach(Segments, segment =>
+            {
+                segment.UpdateSignalMix();
+            });
+
             float[] samples = new float[DurationSamples];
             foreach (NoteSegment segment in Segments)
             {
-                // Exclude percussion because it makes the signal dirty
                 if (segment.Channel == (byte)SpecialChannel.Percussion)
                 {
                     continue;
@@ -85,13 +99,12 @@ namespace SimpleSynth.Synths
 
                 long startSample = segment.StartSample;
 
-                DiscreteSignal segmentSignal = segment.GetSignalMix();
+                DiscreteSignal segmentSignal = segment.SignalMix;
 
                 for (long i = 0; i < segmentSignal.Samples.Length; i++)
                 {
                     samples[startSample + i] = (samples[startSample + i] + segmentSignal.Samples[i]) / 2f; // average the data
                 }
-
             }
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);

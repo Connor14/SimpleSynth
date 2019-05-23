@@ -17,34 +17,10 @@ namespace SimpleSynth.Notes
         public long TickCount { get; private set; } = -1; // MUST be initialized to -1
 
         // The time this note starts with respect to the whole MIDI
-        public double StartSeconds
-        {
-            get
-            {
-                int ticksPerBeat = Synth.Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = Synth.TempoMicroSecondsPerBeat; // 600000 uS / beat
-
-                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
-                long totalMicroseconds = (long)(StartTick * microsecondsPerTick);
-
-                return (double)totalMicroseconds / 1000000;
-            }
-        }
+        public double StartSeconds { get; private set; }
 
         // The duration of this note in seconds
-        public double DurationSeconds
-        {
-            get
-            {
-                int ticksPerBeat = Synth.Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = Synth.TempoMicroSecondsPerBeat; // 600000 uS / beat
-
-                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
-                long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
-
-                return (double)totalMicroseconds / 1000000;
-            }
-        }
+        public double DurationSeconds { get; private set; }
 
         // The sample this note starts on (in relation to the ENTIRE midi)
         public int StartSample
@@ -73,6 +49,8 @@ namespace SimpleSynth.Notes
             }
         }
 
+        public DiscreteSignal SignalMix { get; protected set; }
+
         public NoteSegment(MidiSynth synth, byte channel, byte note, long startTick)
         {
             this.Synth = synth;
@@ -84,9 +62,26 @@ namespace SimpleSynth.Notes
         public void SetEndingTick(long endTick)
         {
             this.TickCount = endTick - StartTick;
+
+            int ticksPerBeat = Synth.Sequence.Division; // 192 ticks/beat
+            int microsecondsPerBeat = Synth.TempoMicroSecondsPerBeat; // 600000 uS / beat
+
+            double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
+
+            long startMicroseconds = (long)(StartTick * microsecondsPerTick);
+            long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
+
+            this.StartSeconds = (double)startMicroseconds / 1000000;
+            this.DurationSeconds = (double)totalMicroseconds / 1000000;
         }
 
-        public abstract DiscreteSignal GetSignalMix();
+        // MUST be called before attempting to use the SignalMix propery
+        public void UpdateSignalMix()
+        {
+            SignalMix = GetSignalMix();
+        }
+
+        protected abstract DiscreteSignal GetSignalMix();
 
         protected DiscreteSignal GetSignal(SignalType signalType, double frequency)
         {
