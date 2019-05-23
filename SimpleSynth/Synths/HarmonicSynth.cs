@@ -1,93 +1,34 @@
 ﻿using MidiSharp;
 using MidiSharp.Events;
 using MidiSharp.Events.Meta;
-using MidiSharp.Events.Voice;
 using MidiSharp.Events.Voice.Note;
+using NWaves.Audio;
+using NWaves.Filters;
+using NWaves.Signals;
+using SimpleSynth.Notes;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace SimpleSynth
+namespace SimpleSynth.Synths
 {
-    public class MidiSegmenter
+    public class HarmonicSynth : MidiSynth
     {
-        public MidiSequence Sequence;
+        public int HarmonicCount { get; set; }
+        public bool AllHarmonics { get; set; }
 
-        // the total number of ticks in this sequence
-        private long _tickCount;
-        public long TickCount
+        public HarmonicSynth(Stream midiStream, bool includeAdsr, int harmonicCount, bool allHarmonics) : base(midiStream, includeAdsr)
         {
-            get
-            {
-                return _tickCount;
-            }
+            this.HarmonicCount = harmonicCount;
+            this.AllHarmonics = allHarmonics;
+
+            this.Segments = GetSegments();
         }
 
-        // the duration of the MIDI in seconds
-        public double DurationSeconds
-        {
-            get
-            {
-                int ticksPerBeat = Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = TempoMicroSecondsPerBeat; // 600000 uS / beat
-
-                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
-                long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
-
-                return (double)totalMicroseconds / 1000000;
-            }
-        }
-
-        // the duratioon of the MIDI in samples
-        public int DurationSamples
-        {
-            get
-            {
-                return (int)(SynthConsts.SampleRate * DurationSeconds);
-            }
-        }
-
-
-        private const int microsecondsPerMinute = 60000000; // the number of microseconds per minute (just a useful number)
-        private int _tempo = -1; // the MIDI tempo in microseconds / quarter note
-
-        // same as _tempo
-        public int TempoMicroSecondsPerBeat
-        {
-            get
-            {
-                return _tempo;
-            }
-        }
-
-        // The Tempo in BPM
-        public int TempoBeatsPerMinute
-        {
-            get
-            {
-                return microsecondsPerMinute / _tempo;
-            }
-        }
-
-        // All of the note data including their start times, durations, etc
-        private List<NoteSegment> _segments;
-        public List<NoteSegment> Segments
-        {
-            get
-            {
-                return _segments;
-            }
-        }
-
-        public MidiSegmenter(MidiSequence sequence)
-        {
-            this.Sequence = sequence;
-
-            _segments = GetSegments();
-        }
-
-        private List<NoteSegment> GetSegments()
+        // implementation is used by the base class
+        protected override List<NoteSegment> GetSegments()
         {
             List<NoteSegment> allSegments = new List<NoteSegment>();
 
@@ -127,7 +68,7 @@ namespace SimpleSynth
                         if (midiEventType == typeof(OnNoteVoiceMidiEvent))
                         {
                             OnNoteVoiceMidiEvent e = (OnNoteVoiceMidiEvent)midiEvent;
-                            segments.Add(new NoteSegment(this, e.Channel, e.Note, currentTick));
+                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, HarmonicCount, AllHarmonics));
                         }
                         else if (midiEventType == typeof(OffNoteVoiceMidiEvent))
                         {
@@ -139,9 +80,9 @@ namespace SimpleSynth
                             TempoMetaMidiEvent e = (TempoMetaMidiEvent)midiEvent;
 
                             // use the first tempo marking we find
-                            if (_tempo == -1)
+                            if (this.TempoMicroSecondsPerBeat == -1)
                             {
-                                _tempo = e.Value;
+                                this.TempoMicroSecondsPerBeat = e.Value;
                             }
                         }
                     }
@@ -151,7 +92,7 @@ namespace SimpleSynth
                 // Theoretically, the last event is a NoteOff event, so it has no duration. Therefore, our currentTick count is our total stick count
                 if (currentTick > TickCount)
                 {
-                    _tickCount = currentTick;
+                    this.TickCount = currentTick;
                 }
 
                 // now we have all of our segments for the track. These should all be completed (Complete == true)

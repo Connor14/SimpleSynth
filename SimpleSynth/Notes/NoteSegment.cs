@@ -1,32 +1,46 @@
-﻿using NWaves.Operations;
-using NWaves.Signals;
+﻿using NWaves.Signals;
 using NWaves.Signals.Builders;
+using SimpleSynth.Synths;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace SimpleSynth
+namespace SimpleSynth.Notes
 {
-
-    public class NoteSegment
+    public abstract class NoteSegment
     {
-        public MidiSegmenter Segmenter;
-        public byte Channel;
-        public byte Note;
+        public MidiSynth Synth { get; private set; }
+        public byte Channel { get; private set; }
+        public byte Note { get; private set; }
 
-        public long StartTick;
+        public long StartTick { get; private set; }
+        public long TickCount { get; private set; } = -1; // MUST be initialized to -1
 
         // The time this note starts with respect to the whole MIDI
         public double StartSeconds
         {
             get
             {
-                int ticksPerBeat = Segmenter.Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = Segmenter.TempoMicroSecondsPerBeat; // 600000 uS / beat
+                int ticksPerBeat = Synth.Sequence.Division; // 192 ticks/beat
+                int microsecondsPerBeat = Synth.TempoMicroSecondsPerBeat; // 600000 uS / beat
 
                 double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
                 long totalMicroseconds = (long)(StartTick * microsecondsPerTick);
+
+                return (double)totalMicroseconds / 1000000;
+            }
+        }
+
+        // The duration of this note in seconds
+        public double DurationSeconds
+        {
+            get
+            {
+                int ticksPerBeat = Synth.Sequence.Division; // 192 ticks/beat
+                int microsecondsPerBeat = Synth.TempoMicroSecondsPerBeat; // 600000 uS / beat
+
+                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
+                long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
 
                 return (double)totalMicroseconds / 1000000;
             }
@@ -37,8 +51,17 @@ namespace SimpleSynth
         {
             get
             {
-                return (int)(SynthConsts.SampleRate * StartSeconds);
+                return (int)(SynthConsts.SAMPLE_RATE * StartSeconds);
 
+            }
+        }
+
+        // The duraton of this note in samples
+        public int DurationSamples
+        {
+            get
+            {
+                return (int)(SynthConsts.SAMPLE_RATE * DurationSeconds);
             }
         }
 
@@ -50,34 +73,9 @@ namespace SimpleSynth
             }
         }
 
-        public long TickCount = -1;
-        // The duration of this note in seconds
-        public double DurationSeconds
+        public NoteSegment(MidiSynth synth, byte channel, byte note, long startTick)
         {
-            get
-            {
-                int ticksPerBeat = Segmenter.Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = Segmenter.TempoMicroSecondsPerBeat; // 600000 uS / beat
-
-                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
-                long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
-
-                return (double)totalMicroseconds / 1000000;
-            }
-        }
-
-        // The duraton of this note in samples
-        public int DurationSamples
-        {
-            get
-            {
-                return (int)(SynthConsts.SampleRate * DurationSeconds);
-            }
-        }
-
-        public NoteSegment(MidiSegmenter segmenter, byte channel, byte note, long startTick)
-        {
-            this.Segmenter = segmenter;
+            this.Synth = synth;
             this.Channel = channel;
             this.Note = note;
             this.StartTick = startTick;
@@ -88,41 +86,13 @@ namespace SimpleSynth
             this.TickCount = endTick - StartTick;
         }
 
-        public DiscreteSignal GetSignalMix(SignalType[] types, bool includeAdsr)
-        {
-            if (types == null || types.Length == 0)
-            {
-                throw new Exception();
-            }
+        public abstract DiscreteSignal GetSignalMix();
 
-            DiscreteSignal mainSignal = GetSignal(types[0]);
-
-            for (int t = 1; t < types.Length; t++)
-            {
-                DiscreteSignal signal = GetSignal(types[t]);
-
-                mainSignal.Combine(signal);
-            }
-
-            if (includeAdsr)
-            {
-                DiscreteSignal adsr = GetSignal(SignalType.Adsr);
-
-                for (int i = 0; i < mainSignal.Samples.Length; i++)
-                {
-                    mainSignal[i] = mainSignal.Samples[i] * adsr.Samples[i] * .5f;
-                }
-            }
-
-            return mainSignal;
-        }
-
-        private DiscreteSignal GetSignal(SignalType signalType)
+        protected DiscreteSignal GetSignal(SignalType signalType, double frequency)
         {
             DiscreteSignal signal = null;
 
             int sampleCount = DurationSamples;
-            double frequency = SynthUtils.NoteToFrequency(Note);
 
             switch (signalType)
             {
@@ -131,7 +101,7 @@ namespace SimpleSynth
                         .SetParameter("frequency", frequency)
                         .SetParameter("phase", Math.PI / 6)
                         .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SampleRate)
+                        .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Sawtooth:
@@ -140,7 +110,7 @@ namespace SimpleSynth
                         .SetParameter("high", 0.3f)
                         .SetParameter("freq", frequency)
                         .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SampleRate)
+                        .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Triangle:
@@ -149,7 +119,7 @@ namespace SimpleSynth
                         .SetParameter("high", 0.3f)
                         .SetParameter("freq", frequency)
                         .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SampleRate)
+                        .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Square:
@@ -158,17 +128,17 @@ namespace SimpleSynth
                         .SetParameter("high", 0.25f)
                         .SetParameter("freq", frequency)
                         .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SampleRate)
+                        .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Adsr:
-                                            // short, medium, long
+                    // short, medium, long
                     double attackTime = .01; // .01, .05, or .1
                     double decayTime = .02; // .02, .1, or .2
                     double releaseTime = .015; // .015, .075, or .15
                     signal = new AdsrBuilder(attackTime, decayTime, DurationSeconds - (attackTime + decayTime + releaseTime), releaseTime)
                         .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SampleRate)
+                        .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
                 default:

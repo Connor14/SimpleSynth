@@ -6,7 +6,7 @@ namespace SimpleSynth
 {
     public enum SignalType
     {
-        Sine = 0,
+        Sine,
         Sawtooth,
         Triangle,
         Square,

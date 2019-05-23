@@ -1,5 +1,7 @@
 ﻿using SimpleSynth;
+using SimpleSynth.Synths;
 using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace DemoProject
@@ -14,6 +16,12 @@ namespace DemoProject
             Console.Write("Enter WAV output path: ");
             string outputWav = Console.ReadLine();
 
+            Console.Write("Harmonic count: ");
+            string inputHarmonicCount = Console.ReadLine();
+
+            Console.Write("Include ALL harmonics (n = odd only)? (Y/n): ");
+            string inputAllHarmonics = Console.ReadLine();
+
             Console.Write("Use ADSR envelope? (Y/n): ");
             string useAdsr = Console.ReadLine();
 
@@ -23,12 +31,27 @@ namespace DemoProject
                 enableAdsr = false;
             }
 
-            SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square, SignalType.Sawtooth };
+            int harmonicCount = int.Parse(inputHarmonicCount);
+
+            bool allHarmonics = true;
+            if(inputAllHarmonics == "n")
+            {
+                allHarmonics = false; // odd only
+            }
+
+            SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square };
 
             Console.WriteLine("Starting...");
             using (var stream = File.OpenRead(inputMidi))
             {
-                MemoryStream result = MidiSynth.GenerateWAV(stream, signalTypes, enableAdsr);
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                HarmonicSynth synth = new HarmonicSynth(stream, enableAdsr, harmonicCount, allHarmonics);
+
+                MemoryStream result = synth.GenerateWAV();
+                stopwatch.Stop();
+
+                Console.WriteLine("Finished in: " + stopwatch.Elapsed.TotalSeconds);
 
                 using (var outputStream = File.OpenWrite(outputWav))
                 {
