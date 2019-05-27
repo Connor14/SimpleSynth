@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.1.0</Version>
+    <Authors>Connor14</Authors>
+    <Company>Connor14</Company>
+    <PackageProjectUrl>https://github.com/Connor14/SimpleSynth</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A simple C# library that can read a MIDI file and spit out a WAV file.</Description>
+    <Copyright>2019 Connor Schmidt</Copyright>
+    <PackageTags>music, midi, wav, synth, synthesizer</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
