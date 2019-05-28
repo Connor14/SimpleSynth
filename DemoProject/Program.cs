@@ -22,15 +22,6 @@ namespace DemoProject
             Console.Write("Include ALL harmonics (n = odd only)? (Y/n): ");
             string inputAllHarmonics = Console.ReadLine();
 
-            Console.Write("Use ADSR envelope? (Y/n): ");
-            string useAdsr = Console.ReadLine();
-
-            bool enableAdsr = true;
-            if (useAdsr == "n")
-            {
-                enableAdsr = false;
-            }
-
             int harmonicCount = int.Parse(inputHarmonicCount);
 
             bool allHarmonics = true;
@@ -46,7 +37,7 @@ namespace DemoProject
             {
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
-                HarmonicSynth synth = new HarmonicSynth(stream, enableAdsr, harmonicCount, allHarmonics);
+                HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount, allHarmonics);
 
                 MemoryStream result = synth.GenerateWAV();
                 stopwatch.Stop();

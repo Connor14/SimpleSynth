@@ -126,19 +126,21 @@ namespace SimpleSynth.Notes
                         .SampledAt(SynthConsts.SAMPLE_RATE)
                         .Build();
                     break;
-                case SignalType.Adsr:
-                    // short, medium, long
-                    double attackTime = .01; // .01, .05, or .1
-                    double decayTime = .02; // .02, .1, or .2
-                    double releaseTime = .015; // .015, .075, or .15
-                    signal = new AdsrBuilder(attackTime, decayTime, DurationSeconds - (attackTime + decayTime + releaseTime), releaseTime)
-                        .OfLength(sampleCount)
-                        .SampledAt(SynthConsts.SAMPLE_RATE)
-                        .Build();
-                    break;
                 default:
                     throw new Exception();
             }
+
+            return signal;
+        }
+
+        protected DiscreteSignal GetAdsrEnvelope(double frequency, AdsrParameters adsrParameters)
+        {
+            int sampleCount = DurationSamples;
+
+            DiscreteSignal signal = new AdsrBuilder(adsrParameters.AttackTime, adsrParameters.DecayTime, adsrParameters.GetSustainTime(DurationSeconds), adsrParameters.ReleaseTime)
+                .OfLength(sampleCount)
+                .SampledAt(SynthConsts.SAMPLE_RATE)
+                .Build();
 
             return signal;
         }

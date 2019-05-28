@@ -19,7 +19,7 @@ namespace SimpleSynth.Synths
         public int HarmonicCount { get; set; }
         public bool AllHarmonics { get; set; }
 
-        public HarmonicSynth(Stream midiStream, bool includeAdsr, int harmonicCount, bool allHarmonics) : base(midiStream, includeAdsr)
+        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int harmonicCount, bool allHarmonics) : base(midiStream, adsrParameters)
         {
             this.HarmonicCount = harmonicCount;
             this.AllHarmonics = allHarmonics;

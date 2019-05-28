@@ -33,9 +33,11 @@ namespace SimpleSynth.Notes
                 }
             }
 
-            if (this.Synth.IncludeADSR)
+            mainSignal.NormalizeAmplitude(1f); // might help make a nicer ADSR effect because we don't normalize amplitudes AFTER ADSR until the final WAV is made. Just a theory.
+
+            if (this.Synth.AdsrParameters != null)
             {
-                DiscreteSignal adsr = GetSignal(SignalType.Adsr, frequency);
+                DiscreteSignal adsr = GetAdsrEnvelope(frequency, Synth.AdsrParameters);
 
                 for (int i = 0; i < mainSignal.Samples.Length; i++)
                 {

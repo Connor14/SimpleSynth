@@ -26,7 +26,7 @@ Create an instance of the `HarmonicSynth` class and run the `GenerateWAV` method
 using SimpleSynth;
 using SimpleSynth.Synths;
 ...
-HarmonicSynth synth = new HarmonicSynth(stream, enableAdsr, harmonicCount, allHarmonics);
+HarmonicSynth synth = new HarmonicSynth(midiFileStream, new AdsrParameters(), harmonicCount, allHarmonics);
 MemoryStream result = synth.GenerateWAV();
 ...
 ```

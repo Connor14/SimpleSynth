@@ -9,7 +9,11 @@ namespace SimpleSynth
         Sine,
         Sawtooth,
         Triangle,
-        Square,
-        Adsr // this is an envelope, not an audio signal
+        Square
     }
+
+    //public enum EnvelopeType
+    //{
+    //    Adsr
+    //}
 }

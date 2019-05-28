@@ -18,7 +18,7 @@ namespace SimpleSynth.Synths
 {
     public abstract class MidiSynth
     {
-        public bool IncludeADSR { get; set; }
+        public AdsrParameters AdsrParameters { get; set; }
 
         public MidiSequence Sequence { get; set; }
 
@@ -65,16 +65,14 @@ namespace SimpleSynth.Synths
         // All of the note data including their start times, durations, etc
         public List<NoteSegment> Segments { get; set; }
 
-        public MidiSynth(Stream midiStream, bool includeAdsr)
+        public MidiSynth(Stream midiStream, AdsrParameters adsrParameters = null)
         {
             Sequence = MidiSequence.Open(midiStream);
 
-            IncludeADSR = includeAdsr;
+            AdsrParameters = adsrParameters;
         }
 
         protected abstract List<NoteSegment> GetSegments();
-
-        object lockObject = new object();
 
         public MemoryStream GenerateWAV()
         {
@@ -90,6 +88,12 @@ namespace SimpleSynth.Synths
             });
 
             float[] samples = new float[DurationSamples];
+
+            // there was inconsistent sound between MIDI files because they had slightly different event orders and the averaging of the signals was the wrong way to do things
+            // With the averaging method, we could make it top or bottom heavy depending on the sort. 
+            //var OrdedSegments = Segments.OrderBy(seg => seg.Note).ThenByDescending(seg => seg.DurationSamples);
+            //Console.WriteLine(OrdedSegments.First().DurationSamples + " " + OrdedSegments.First().Note);
+
             foreach (NoteSegment segment in Segments)
             {
                 if (segment.Channel == (byte)SpecialChannel.Percussion)
@@ -103,13 +107,15 @@ namespace SimpleSynth.Synths
 
                 for (long i = 0; i < segmentSignal.Samples.Length; i++)
                 {
-                    samples[startSample + i] = (samples[startSample + i] + segmentSignal.Samples[i]) / 2f; // average the data
+                    // NOTE: Averaging the frequencies wasn't mathematically correct. 
+                    // Adding them and then normalizing later gives the proper sound, regardless of MIDI order
+                    samples[startSample + i] = samples[startSample + i] + segmentSignal.Samples[i]; // add the samples together
                 }
             }
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 
-            signal.NormalizeAmplitude(1f);
+            signal.NormalizeAmplitude(1f); // adjust the samples to fit between -1f and 1f
 
             //var filter = new CombFeedforwardFilter(25);
             //signal = filter.ApplyTo(signal);
@@ -118,8 +124,9 @@ namespace SimpleSynth.Synths
             //var notchFilter = new NotchFilter(frequency / signal.SamplingRate);
             //signal = notchFilter.ApplyTo(signal);
 
-            var maFilter = new MovingAverageFilter();
-            signal = maFilter.ApplyTo(signal);
+            // NOTE: I don't believe this is necessary using the correct sample adding technique. I don't hear ANY pops.
+            //var maFilter = new MovingAverageFilter();
+            //signal = maFilter.ApplyTo(signal);
 
             MemoryStream output = null;
             using (MemoryStream stream = new MemoryStream())
