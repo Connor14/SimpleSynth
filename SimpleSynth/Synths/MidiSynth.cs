@@ -115,7 +115,7 @@ namespace SimpleSynth.Synths
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 
-            signal.NormalizeAmplitude(1f); // adjust the samples to fit between -1f and 1f
+            signal.NormalizeAmplitude(.9f); // adjust the samples to fit between [-1, 1)
 
             //var filter = new CombFeedforwardFilter(25);
             //signal = filter.ApplyTo(signal);
@@ -124,7 +124,7 @@ namespace SimpleSynth.Synths
             //var notchFilter = new NotchFilter(frequency / signal.SamplingRate);
             //signal = notchFilter.ApplyTo(signal);
 
-            // NOTE: I don't believe this is necessary using the correct sample adding technique. I don't hear ANY pops.
+            // NOTE: I don't believe this is necessary when using the correct sample adding technique. I don't hear ANY pops.
             //var maFilter = new MovingAverageFilter();
             //signal = maFilter.ApplyTo(signal);
 
