@@ -1,6 +1,8 @@
 # SimpleSynth
 A simple C# library that can read a MIDI file and spit out a WAV file.
 
+Find it on NuGet: https://www.nuget.org/packages/SimpleSynth/
+
 ## About
 
 I created this project so that I had a simple way to create WAV files out of the MIDI files from the **AbundantMusic.NET** project (https://github.com/Connor14/AbundantMusic.NET). As of right now, it just synthesizes sound using multiple harmonics of a Sine wave, but it could potentially be expanded to support more forms of synthesis.
