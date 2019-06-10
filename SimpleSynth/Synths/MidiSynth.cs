@@ -76,15 +76,13 @@ namespace SimpleSynth.Synths
 
         public MemoryStream GenerateWAV()
         {
+            ConcurrentDictionary<Guid, DiscreteSignal> noteSignals = new ConcurrentDictionary<Guid, DiscreteSignal>();
+
             // generate signals in parallel
-            // Russian Food.mid is about 2-3 seconds vs about 6-7 seconds previously @ 5 harmonic intervals with ALL harmonics and ADSR
-            //      10 @ 3.6 vs 12.5
-            //      20 @ 6.5 and 25
-            // connor.mid: 2-3 vs 6-7
-            // ancient history.mid: 1-2 vs 4-5
+            // saves significant amounts of time (Abundant Music.mid finished in 8 seconds syncronously @ 10 harmonics, 2.3 in parallel @ 10 harmonics)
             Parallel.ForEach(Segments, segment =>
             {
-                segment.UpdateSignalMix();
+                noteSignals[segment.Guid] = segment.GetSignalMix();
             });
 
             float[] samples = new float[DurationSamples];
@@ -103,7 +101,7 @@ namespace SimpleSynth.Synths
 
                 long startSample = segment.StartSample;
 
-                DiscreteSignal segmentSignal = segment.SignalMix;
+                DiscreteSignal segmentSignal = noteSignals[segment.Guid];
 
                 for (long i = 0; i < segmentSignal.Samples.Length; i++)
                 {

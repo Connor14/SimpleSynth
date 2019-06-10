@@ -75,7 +75,7 @@ namespace SimpleSynth.Synths
                             OffNoteVoiceMidiEvent e = (OffNoteVoiceMidiEvent)midiEvent;
                             segments.Where(s => !s.Complete && s.Channel == e.Channel && s.Note == e.Note).First().SetEndingTick(currentTick);
                         }
-                        else if (midiEventType == typeof(TempoMetaMidiEvent))
+                        else if (midiEventType == typeof(TempoMetaMidiEvent)) // this may not necessarily come before every OnNoteVoice event
                         {
                             TempoMetaMidiEvent e = (TempoMetaMidiEvent)midiEvent;
 

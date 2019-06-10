@@ -9,6 +9,8 @@ namespace SimpleSynth.Notes
 {
     public abstract class NoteSegment
     {
+        public Guid Guid;
+
         public MidiSynth Synth { get; private set; }
         public byte Channel { get; private set; }
         public byte Note { get; private set; }
@@ -49,10 +51,10 @@ namespace SimpleSynth.Notes
             }
         }
 
-        public DiscreteSignal SignalMix { get; protected set; }
-
         public NoteSegment(MidiSynth synth, byte channel, byte note, long startTick)
         {
+            Guid = Guid.NewGuid();
+
             this.Synth = synth;
             this.Channel = channel;
             this.Note = note;
@@ -75,13 +77,7 @@ namespace SimpleSynth.Notes
             this.DurationSeconds = (double)totalMicroseconds / 1000000;
         }
 
-        // MUST be called before attempting to use the SignalMix propery
-        public void UpdateSignalMix()
-        {
-            SignalMix = GetSignalMix();
-        }
-
-        protected abstract DiscreteSignal GetSignalMix();
+        public abstract DiscreteSignal GetSignalMix();
 
         protected DiscreteSignal GetSignal(SignalType signalType, double frequency)
         {

@@ -17,7 +17,7 @@ namespace SimpleSynth.Notes
             AllHarmonics = allHarmonics;
         }
 
-        protected override DiscreteSignal GetSignalMix()
+        public override DiscreteSignal GetSignalMix()
         {
             double frequency = SynthUtils.NoteToFrequency(this.Note);
 
@@ -36,7 +36,7 @@ namespace SimpleSynth.Notes
             // nothing special about .9f. Just needs to be less than 1
             mainSignal.NormalizeAmplitude(.9f); // might help make a nicer ADSR effect because we don't normalize amplitudes AFTER ADSR until the final WAV is made. Just a theory.
 
-            if (this.Synth.AdsrParameters != null)
+            if (Synth.AdsrParameters != null)
             {
                 DiscreteSignal adsr = GetAdsrEnvelope(frequency, Synth.AdsrParameters);
 
