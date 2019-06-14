@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>Connor14</Authors>
     <Company>Connor14</Company>
     <PackageProjectUrl>https://github.com/Connor14/SimpleSynth</PackageProjectUrl>
@@ -10,7 +10,7 @@
     <Description>A simple C# library that can read a MIDI file and spit out a WAV file.</Description>
     <Copyright>2019 Connor Schmidt</Copyright>
     <PackageTags>music, midi, wav, synth, synthesizer</PackageTags>
-    <PackageReleaseNotes>Fixed WAV creation method. Added ability to specify ADSR envelope timings.</PackageReleaseNotes>
+    <PackageReleaseNotes>Use ConcurrentDictionary with Parallel.ForEach.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
