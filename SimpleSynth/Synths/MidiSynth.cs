@@ -84,10 +84,10 @@ namespace SimpleSynth.Synths
 
         public async Task<MemoryStream> GenerateWAV()
         {
-            return await Task.Run(() => { return GenerateWAVSyncronous(); });
+            return await Task.Run(() => { return GenerateWAVSynchronous(); });
         }
 
-        private MemoryStream GenerateWAVSyncronous()
+        private MemoryStream GenerateWAVSynchronous()
         {
             ConcurrentDictionary<Guid, DiscreteSignal> noteSignals = new ConcurrentDictionary<Guid, DiscreteSignal>();
 
