@@ -16,15 +16,20 @@ namespace SimpleSynth.Synths
 {
     public class HarmonicSynth : MidiSynth
     {
-        public int HarmonicCount { get; set; }
-        public bool AllHarmonics { get; set; }
+        public List<double> Harmonics { get; set; }
 
-        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int harmonicCount, bool allHarmonics) : base(midiStream, adsrParameters)
+        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, List<double> harmonics) : base(midiStream, adsrParameters)
         {
-            this.HarmonicCount = harmonicCount;
-            this.AllHarmonics = allHarmonics;
+            this.Harmonics = harmonics;
 
             this.Segments = GetSegments(); // this MUST be called here and NOT in the base class because HarmonicCount and AllHarmonics need to be initialized
+        }
+
+        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int harmonicCount = 10) : base(midiStream, adsrParameters)
+        {
+            this.Harmonics = Enumerable.Range(1, harmonicCount).Select(x => (double)x).ToList();
+
+            this.Segments = GetSegments();
         }
 
         // implementation is used by the base class
@@ -68,7 +73,7 @@ namespace SimpleSynth.Synths
                         if (midiEventType == typeof(OnNoteVoiceMidiEvent))
                         {
                             OnNoteVoiceMidiEvent e = (OnNoteVoiceMidiEvent)midiEvent;
-                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, HarmonicCount, AllHarmonics));
+                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, Harmonics));
                         }
                         else if (midiEventType == typeof(OffNoteVoiceMidiEvent))
                         {

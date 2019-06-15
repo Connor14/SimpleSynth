@@ -1,6 +1,7 @@
 ﻿using SimpleSynth;
 using SimpleSynth.Synths;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -22,16 +23,7 @@ namespace DemoProject
                 Console.Write("Harmonic count: ");
                 string inputHarmonicCount = Console.ReadLine();
 
-                Console.Write("Include ALL harmonics (n = odd only)? (Y/n): ");
-                string inputAllHarmonics = Console.ReadLine();
-
                 int harmonicCount = int.Parse(inputHarmonicCount);
-
-                bool allHarmonics = true;
-                if (inputAllHarmonics == "n")
-                {
-                    allHarmonics = false; // odd only
-                }
 
                 SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square };
 
@@ -41,7 +33,7 @@ namespace DemoProject
                     Stopwatch stopwatch = new Stopwatch();
 
                     stopwatch.Start();
-                    HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount, allHarmonics);
+                    HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount);
 
                     Console.WriteLine(synth.Duration);
 

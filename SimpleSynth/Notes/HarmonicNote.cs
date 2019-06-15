@@ -8,13 +8,11 @@ namespace SimpleSynth.Notes
 {
     public class HarmonicNote : NoteSegment
     {
-        public int HarmonicCount;
-        public bool AllHarmonics;
+        public List<double> Harmonics { get; set; }
 
-        public HarmonicNote(HarmonicSynth synth, byte channel, byte note, long startTick, int harmonicCount, bool allHarmonics) : base(synth, channel, note, startTick)
+        public HarmonicNote(HarmonicSynth synth, byte channel, byte note, long startTick, List<double> harmonics) : base(synth, channel, note, startTick)
         {
-            HarmonicCount = harmonicCount;
-            AllHarmonics = allHarmonics;
+            this.Harmonics = harmonics;
         }
 
         public override DiscreteSignal GetSignalMix()
@@ -23,14 +21,11 @@ namespace SimpleSynth.Notes
 
             DiscreteSignal mainSignal = GetSignal(SignalType.Sine, frequency);
 
-            for (int harmonic = 1; harmonic < HarmonicCount; harmonic++)
+            foreach(double harmonic in Harmonics)
             {
-                if(AllHarmonics || (!AllHarmonics && harmonic % 2 == 1))
-                {
-                    DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * harmonic);
+                DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * harmonic);
 
-                    mainSignal.CombineAdd(signal);
-                }
+                mainSignal.CombineAdd(signal);
             }
 
             // nothing special about .9f. Just needs to be less than 1
