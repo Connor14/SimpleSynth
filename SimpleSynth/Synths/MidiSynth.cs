@@ -25,6 +25,14 @@ namespace SimpleSynth.Synths
         // the total number of ticks in this sequence
         public long TickCount { get; protected set; }
 
+        public TimeSpan Duration
+        {
+            get
+            {
+                return TimeSpan.FromSeconds(DurationSeconds);
+            }
+        }
+
         // the duration of the MIDI in seconds
         public double DurationSeconds
         {
@@ -74,7 +82,12 @@ namespace SimpleSynth.Synths
 
         protected abstract List<NoteSegment> GetSegments();
 
-        public MemoryStream GenerateWAV()
+        public async Task<MemoryStream> GenerateWAV()
+        {
+            return await Task.Run(() => { return GenerateWAVSyncronous(); });
+        }
+
+        private MemoryStream GenerateWAVSyncronous()
         {
             ConcurrentDictionary<Guid, DiscreteSignal> noteSignals = new ConcurrentDictionary<Guid, DiscreteSignal>();
 

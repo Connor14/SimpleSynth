@@ -3,6 +3,7 @@ using SimpleSynth.Synths;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace DemoProject
 {
@@ -10,50 +11,56 @@ namespace DemoProject
     {
         static void Main(string[] args)
         {
-            Console.Write("Enter path to MIDI: ");
-            string inputMidi = Console.ReadLine();
-
-            Console.Write("Enter WAV output path: ");
-            string outputWav = Console.ReadLine();
-
-            Console.Write("Harmonic count: ");
-            string inputHarmonicCount = Console.ReadLine();
-
-            Console.Write("Include ALL harmonics (n = odd only)? (Y/n): ");
-            string inputAllHarmonics = Console.ReadLine();
-
-            int harmonicCount = int.Parse(inputHarmonicCount);
-
-            bool allHarmonics = true;
-            if(inputAllHarmonics == "n")
+            Task.Run(async () =>
             {
-                allHarmonics = false; // odd only
-            }
+                Console.Write("Enter path to MIDI: ");
+                string inputMidi = Console.ReadLine();
 
-            SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square };
+                Console.Write("Enter WAV output path: ");
+                string outputWav = Console.ReadLine();
 
-            Console.WriteLine("Starting...");
-            using (var stream = File.OpenRead(inputMidi))
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount, allHarmonics);
+                Console.Write("Harmonic count: ");
+                string inputHarmonicCount = Console.ReadLine();
 
-                MemoryStream result = synth.GenerateWAV();
-                stopwatch.Stop();
+                Console.Write("Include ALL harmonics (n = odd only)? (Y/n): ");
+                string inputAllHarmonics = Console.ReadLine();
 
-                Console.WriteLine("Finished in: " + stopwatch.Elapsed.TotalSeconds);
+                int harmonicCount = int.Parse(inputHarmonicCount);
 
-                using (var outputStream = File.OpenWrite(outputWav))
+                bool allHarmonics = true;
+                if (inputAllHarmonics == "n")
                 {
-                    result.CopyTo(outputStream);
+                    allHarmonics = false; // odd only
                 }
 
-                result.Dispose();
-            }
+                SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square };
 
-            Console.WriteLine("Done");
-            Console.ReadLine();
+                Console.WriteLine("Starting...");
+                using (var stream = File.OpenRead(inputMidi))
+                {
+                    Stopwatch stopwatch = new Stopwatch();
+
+                    stopwatch.Start();
+                    HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount, allHarmonics);
+
+                    Console.WriteLine(synth.Duration);
+
+                    MemoryStream result = await synth.GenerateWAV();
+                    stopwatch.Stop();
+
+                    Console.WriteLine("Finished in: " + stopwatch.Elapsed.TotalSeconds);
+
+                    using (var outputStream = File.OpenWrite(outputWav))
+                    {
+                        result.CopyTo(outputStream);
+                    }
+
+                    result.Dispose();
+                }
+
+                Console.WriteLine("Done");
+                Console.ReadLine();
+            }).Wait();
         }
     }
 }
