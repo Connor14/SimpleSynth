@@ -90,17 +90,32 @@ namespace SimpleSynth.Synths
 
         private MemoryStream GenerateWAVSynchronous()
         {
-            ConcurrentDictionary<Guid, DiscreteSignal> noteSignals = new ConcurrentDictionary<Guid, DiscreteSignal>();
+            // store frequently used notes
+            ConcurrentDictionary<Tuple<byte, byte, long>, NoteSegment> segmentCache = new ConcurrentDictionary<Tuple<byte, byte, long>, NoteSegment>();
+            // store the frequently used signals
+            ConcurrentDictionary<Tuple<byte, byte, long>, DiscreteSignal> noteSignals = new ConcurrentDictionary<Tuple<byte, byte, long>, DiscreteSignal>();
 
             // generate signals in parallel
             // saves significant amounts of time (Abundant Music.mid finished in 8 seconds syncronously @ 10 harmonics, 2.3 in parallel @ 10 harmonics)
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            // This definitely takes the longest
-            Parallel.ForEach(Segments, segment =>
+            // find duplicate note segments
+            foreach (var segment in Segments)
             {
-                noteSignals[segment.Guid] = segment.GetSignalMix();
+                Tuple<byte, byte, long> identifier = new Tuple<byte, byte, long>(segment.Channel, segment.Note, segment.TickCount);
+
+                if (!segmentCache.ContainsKey(identifier))
+                {
+                    segmentCache[identifier] = segment; // cache the first of a repeated signal
+                }
+            }
+
+            // generate signals for duplicate notes
+            List<NoteSegment> cachedSegments = segmentCache.Select(x => x.Value).ToList();
+            Parallel.ForEach(cachedSegments, segment =>
+            {
+                noteSignals[segment.Identifier] = segment.GetSignalMix();
             });
 
             Debug.WriteLine("Rendering: " + stopwatch.Elapsed.TotalSeconds);
@@ -113,8 +128,11 @@ namespace SimpleSynth.Synths
             //var OrdedSegments = Segments.OrderBy(seg => seg.Note).ThenByDescending(seg => seg.DurationSamples);
             //Console.WriteLine(OrdedSegments.First().DurationSamples + " " + OrdedSegments.First().Note);
 
+            // assemble the final wav
             foreach (NoteSegment segment in Segments)
             {
+                Tuple<byte, byte, long> identifier = new Tuple<byte, byte, long>(segment.Channel, segment.Note, segment.TickCount);
+
                 if (segment.Channel == (byte)SpecialChannel.Percussion)
                 {
                     continue;
@@ -122,7 +140,7 @@ namespace SimpleSynth.Synths
 
                 long startSample = segment.StartSample;
 
-                DiscreteSignal segmentSignal = noteSignals[segment.Guid];
+                DiscreteSignal segmentSignal = noteSignals[identifier];
 
                 for (long i = 0; i < segmentSignal.Samples.Length; i++)
                 {

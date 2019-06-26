@@ -9,14 +9,20 @@ namespace SimpleSynth.Notes
 {
     public abstract class NoteSegment
     {
-        public Guid Guid;
+        public Tuple<byte, byte, long> Identifier
+        {
+            get
+            {
+                return new Tuple<byte, byte, long>(Channel, Note, TickCount);
+            }
+        }
 
         public MidiSynth Synth { get; private set; }
-        public byte Channel { get; private set; }
-        public byte Note { get; private set; }
+        public byte Channel { get; private set; } // possible identifier
+        public byte Note { get; private set; } // possible identifier
 
         public long StartTick { get; private set; }
-        public long TickCount { get; private set; } = -1; // MUST be initialized to -1
+        public long TickCount { get; private set; } = -1; // MUST be initialized to -1. possible identifier
 
         // The time this note starts with respect to the whole MIDI
         public double StartSeconds { get; private set; }
@@ -53,8 +59,6 @@ namespace SimpleSynth.Notes
 
         public NoteSegment(MidiSynth synth, byte channel, byte note, long startTick)
         {
-            Guid = Guid.NewGuid();
-
             this.Synth = synth;
             this.Channel = channel;
             this.Note = note;
