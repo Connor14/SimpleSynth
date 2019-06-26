@@ -9,6 +9,7 @@ using SimpleSynth.Notes;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -93,10 +94,17 @@ namespace SimpleSynth.Synths
 
             // generate signals in parallel
             // saves significant amounts of time (Abundant Music.mid finished in 8 seconds syncronously @ 10 harmonics, 2.3 in parallel @ 10 harmonics)
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            // This definitely takes the longest
             Parallel.ForEach(Segments, segment =>
             {
                 noteSignals[segment.Guid] = segment.GetSignalMix();
             });
+
+            Debug.WriteLine("Rendering: " + stopwatch.Elapsed.TotalSeconds);
+            stopwatch.Restart();
 
             float[] samples = new float[DurationSamples];
 
@@ -123,6 +131,9 @@ namespace SimpleSynth.Synths
                     samples[startSample + i] = samples[startSample + i] + segmentSignal.Samples[i]; // add the samples together
                 }
             }
+
+            stopwatch.Stop();
+            Debug.WriteLine("Combining: " + stopwatch.Elapsed.TotalSeconds);
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 

@@ -35,12 +35,13 @@ namespace DemoProject
                     stopwatch.Start();
                     HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount);
 
-                    Console.WriteLine(synth.Duration);
+                    Console.WriteLine("Segmented in: "+ stopwatch.Elapsed.TotalSeconds);
+                    stopwatch.Restart();
 
                     MemoryStream result = await synth.GenerateWAV();
-                    stopwatch.Stop();
 
-                    Console.WriteLine("Finished in: " + stopwatch.Elapsed.TotalSeconds);
+                    stopwatch.Stop();
+                    Console.WriteLine("Rendered in: " + stopwatch.Elapsed.TotalSeconds);
 
                     using (var outputStream = File.OpenWrite(outputWav))
                     {
