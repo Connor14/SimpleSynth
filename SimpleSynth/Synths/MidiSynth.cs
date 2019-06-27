@@ -103,7 +103,7 @@ namespace SimpleSynth.Synths
             // find duplicate note segments
             foreach (var segment in Segments)
             {
-                Tuple<byte, byte, long> identifier = new Tuple<byte, byte, long>(segment.Channel, segment.Note, segment.TickCount);
+                Tuple<byte, byte, long> identifier = segment.Identifier;
 
                 if (!segmentCache.ContainsKey(identifier))
                 {
@@ -131,12 +131,12 @@ namespace SimpleSynth.Synths
             // assemble the final wav
             foreach (NoteSegment segment in Segments)
             {
-                Tuple<byte, byte, long> identifier = new Tuple<byte, byte, long>(segment.Channel, segment.Note, segment.TickCount);
-
                 if (segment.Channel == (byte)SpecialChannel.Percussion)
                 {
                     continue;
                 }
+
+                Tuple<byte, byte, long> identifier = segment.Identifier;
 
                 long startSample = segment.StartSample;
 

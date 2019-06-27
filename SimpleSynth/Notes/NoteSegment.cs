@@ -9,13 +9,7 @@ namespace SimpleSynth.Notes
 {
     public abstract class NoteSegment
     {
-        public Tuple<byte, byte, long> Identifier
-        {
-            get
-            {
-                return new Tuple<byte, byte, long>(Channel, Note, TickCount);
-            }
-        }
+        public Tuple<byte, byte, long> Identifier { get; private set; } = null;
 
         public MidiSynth Synth { get; private set; }
         public byte Channel { get; private set; } // possible identifier
@@ -79,6 +73,8 @@ namespace SimpleSynth.Notes
 
             this.StartSeconds = (double)startMicroseconds / 1000000;
             this.DurationSeconds = (double)totalMicroseconds / 1000000;
+
+            this.Identifier = new Tuple<byte, byte, long>(Channel, Note, TickCount);
         }
 
         public abstract DiscreteSignal GetSignalMix();
