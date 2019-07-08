@@ -23,7 +23,9 @@ namespace SimpleSynth.Synths
     {
         private IEnumerable<double> _defaultHarmonics { get; set; }
 
-        public ConcurrentDictionary<int, HarmonicChannel> HarmonicChannels { get; set; } = new ConcurrentDictionary<int, HarmonicChannel>();
+        // cannot re-assign otherwise it breaks the pass-by-reference
+        // not sure if this really needs to be a ConcurrentDictionary. My guess is that it doesn't
+        public ConcurrentDictionary<int, HarmonicChannel> HarmonicChannels { get; private set; } = new ConcurrentDictionary<int, HarmonicChannel>();
 
         public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, IEnumerable<double> defaultHarmonics) : base(midiStream, adsrParameters)
         {
