@@ -1,35 +1,40 @@
 ﻿using MidiSharp;
 using MidiSharp.Events;
 using MidiSharp.Events.Meta;
+using MidiSharp.Events.Meta.Text;
+using MidiSharp.Events.Voice;
 using MidiSharp.Events.Voice.Note;
 using NWaves.Audio;
 using NWaves.Filters;
 using NWaves.Signals;
 using SimpleSynth.Notes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SimpleSynth.Synths
 {
     public class HarmonicSynth : MidiSynth
     {
-        public List<double> Harmonics { get; set; }
+        private IEnumerable<double> _defaultHarmonics { get; set; }
 
-        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, List<double> harmonics) : base(midiStream, adsrParameters)
+        public ConcurrentDictionary<int, HarmonicChannel> HarmonicChannels { get; set; } = new ConcurrentDictionary<int, HarmonicChannel>();
+
+        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, IEnumerable<double> defaultHarmonics) : base(midiStream, adsrParameters)
         {
-            this.Harmonics = harmonics;
+            this._defaultHarmonics = defaultHarmonics;
 
             this.Segments = GetSegments(); // this MUST be called here and NOT in the base class because HarmonicCount and AllHarmonics need to be initialized
         }
 
-        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int harmonicCount = 10) : base(midiStream, adsrParameters)
+        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int defaultHarmonicCount = 10)
+            : this(midiStream, adsrParameters, Enumerable.Range(1, defaultHarmonicCount).Select(x => (double)x))
         {
-            this.Harmonics = Enumerable.Range(1, harmonicCount).Select(x => (double)x).ToList();
-
-            this.Segments = GetSegments();
         }
 
         // implementation is used by the base class
@@ -70,10 +75,22 @@ namespace SimpleSynth.Synths
                     {
                         Type midiEventType = midiEvent.GetType();
 
+                        // add new harmonic channel if it doesn't exist.
+                        if(midiEventType.IsSubclassOf(typeof(VoiceMidiEvent)))
+                        {
+                            VoiceMidiEvent e = (VoiceMidiEvent)midiEvent;
+
+                            if (!HarmonicChannels.ContainsKey(e.Channel))
+                            {
+                                // use ToList to create a new list because every HarmonicChannel was referring to _defaultHarmonics. Therefore, every channel changed.
+                                HarmonicChannels[e.Channel] = new HarmonicChannel(e.Channel, _defaultHarmonics.ToList());
+                            }
+                        }
+
                         if (midiEventType == typeof(OnNoteVoiceMidiEvent))
                         {
                             OnNoteVoiceMidiEvent e = (OnNoteVoiceMidiEvent)midiEvent;
-                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, Harmonics));
+                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, HarmonicChannels[e.Channel].Harmonics));
                         }
                         else if (midiEventType == typeof(OffNoteVoiceMidiEvent))
                         {
@@ -89,6 +106,12 @@ namespace SimpleSynth.Synths
                             {
                                 this.TempoMicroSecondsPerBeat = e.Value;
                             }
+                        }
+                        else if (midiEventType == typeof(ProgramChangeVoiceMidiEvent))
+                        {
+                            ProgramChangeVoiceMidiEvent e = (ProgramChangeVoiceMidiEvent)midiEvent;
+
+                            HarmonicChannels[e.Channel].SetInstrument(e.Number);
                         }
                     }
 
@@ -106,6 +129,5 @@ namespace SimpleSynth.Synths
 
             return allSegments;
         }
-
     }
 }

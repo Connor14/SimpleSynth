@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DemoProject
@@ -20,12 +21,11 @@ namespace DemoProject
                 Console.Write("Enter WAV output path: ");
                 string outputWav = Console.ReadLine();
 
-                Console.Write("Harmonic count: ");
-                string inputHarmonicCount = Console.ReadLine();
+                // Not used if we call SetHarmonics below
+                //Console.Write("Harmonic count: ");
+                //string inputHarmonicCount = Console.ReadLine();
 
-                int harmonicCount = int.Parse(inputHarmonicCount);
-
-                SignalType[] signalTypes = new SignalType[] { SignalType.Sine, SignalType.Triangle, SignalType.Square };
+                //int harmonicCount = int.Parse(inputHarmonicCount);
 
                 Console.WriteLine("Starting...");
                 using (var stream = File.OpenRead(inputMidi))
@@ -33,7 +33,14 @@ namespace DemoProject
                     Stopwatch stopwatch = new Stopwatch();
 
                     stopwatch.Start();
-                    HarmonicSynth synth = new HarmonicSynth(stream, new AdsrParameters(), harmonicCount);
+                    HarmonicSynth synth = new HarmonicSynth(stream, AdsrParameters.Short);
+
+                    int maxKey = synth.HarmonicChannels.Keys.Max();
+                    foreach (int key in synth.HarmonicChannels.Keys)
+                    {
+                        Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicChannels[key].Instrument);
+                        synth.HarmonicChannels[key].SetHarmonics(maxKey - key + 1);
+                    }
 
                     Console.WriteLine("Segmented in: "+ stopwatch.Elapsed.TotalSeconds);
                     stopwatch.Restart();

@@ -3,6 +3,7 @@ using SimpleSynth.Synths;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace SimpleSynth.Notes
 {
@@ -19,11 +20,12 @@ namespace SimpleSynth.Notes
         {
             double frequency = SynthUtils.NoteToFrequency(this.Note);
 
-            DiscreteSignal mainSignal = GetSignal(SignalType.Sine, frequency);
+            // render the first harmonic in the list to prevent duplication
+            DiscreteSignal mainSignal = GetSignal(SignalType.Sine, frequency * Harmonics[0]);
 
-            foreach(double harmonic in Harmonics)
+            for(int i = 1; i < Harmonics.Count; i++)
             {
-                DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * harmonic);
+                DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * Harmonics[i]);
 
                 mainSignal.CombineAdd(signal);
             }
