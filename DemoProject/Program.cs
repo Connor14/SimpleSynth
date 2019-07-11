@@ -35,11 +35,12 @@ namespace DemoProject
                     stopwatch.Start();
                     HarmonicSynth synth = new HarmonicSynth(stream, AdsrParameters.Short);
 
-                    int maxKey = synth.HarmonicChannels.Keys.Max();
-                    foreach (int key in synth.HarmonicChannels.Keys)
+                    // modify the default HarmonicParameters for each channel to adjust the final mixed sound
+                    int maxKey = synth.HarmonicParameters.Keys.Max();
+                    foreach (int key in synth.HarmonicParameters.Keys)
                     {
-                        Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicChannels[key].Instrument);
-                        synth.HarmonicChannels[key].SetHarmonics(maxKey - key + 1);
+                        Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicParameters[key].Instrument);
+                        synth.HarmonicParameters[key].SetHarmonics((key % 2 + 1) * 2);
                     }
 
                     Console.WriteLine("Segmented in: "+ stopwatch.Elapsed.TotalSeconds);

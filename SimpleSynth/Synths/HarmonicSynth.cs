@@ -24,8 +24,7 @@ namespace SimpleSynth.Synths
         private IEnumerable<double> _defaultHarmonics { get; set; }
 
         // cannot re-assign otherwise it breaks the pass-by-reference
-        // not sure if this really needs to be a ConcurrentDictionary. My guess is that it doesn't
-        public ConcurrentDictionary<int, HarmonicChannel> HarmonicChannels { get; private set; } = new ConcurrentDictionary<int, HarmonicChannel>();
+        public ConcurrentDictionary<int, HarmonicParameters> HarmonicParameters { get; private set; } = new ConcurrentDictionary<int, HarmonicParameters>();
 
         public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, IEnumerable<double> defaultHarmonics) : base(midiStream, adsrParameters)
         {
@@ -82,17 +81,18 @@ namespace SimpleSynth.Synths
                         {
                             VoiceMidiEvent e = (VoiceMidiEvent)midiEvent;
 
-                            if (!HarmonicChannels.ContainsKey(e.Channel))
+                            if (!HarmonicParameters.ContainsKey(e.Channel))
                             {
-                                // use ToList to create a new list because every HarmonicChannel was referring to _defaultHarmonics. Therefore, every channel changed.
-                                HarmonicChannels[e.Channel] = new HarmonicChannel(e.Channel, _defaultHarmonics.ToList());
+                                // use ToList to create a NEW list because every HarmonicChannel is referring to _defaultHarmonics.
+                                // If we don't make a NEW list, then if we edit the harmonics of one channel, they all change
+                                HarmonicParameters[e.Channel] = new HarmonicParameters(e.Channel, _defaultHarmonics.ToList());
                             }
                         }
 
                         if (midiEventType == typeof(OnNoteVoiceMidiEvent))
                         {
                             OnNoteVoiceMidiEvent e = (OnNoteVoiceMidiEvent)midiEvent;
-                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick, HarmonicChannels[e.Channel].Harmonics));
+                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick));
                         }
                         else if (midiEventType == typeof(OffNoteVoiceMidiEvent))
                         {
@@ -113,7 +113,7 @@ namespace SimpleSynth.Synths
                         {
                             ProgramChangeVoiceMidiEvent e = (ProgramChangeVoiceMidiEvent)midiEvent;
 
-                            HarmonicChannels[e.Channel].SetInstrument(e.Number);
+                            HarmonicParameters[e.Channel].SetInstrument(e.Number);
                         }
                     }
 

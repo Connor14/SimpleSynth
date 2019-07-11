@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SimpleSynth
 {
-    public class HarmonicChannel
+    public class HarmonicParameters
     {
 
         public int Channel { get; private set; }
@@ -14,7 +14,7 @@ namespace SimpleSynth
 
         public List<double> Harmonics { get; private set; }
 
-        public HarmonicChannel(int channel, List<double> defaultHarmonics)
+        public HarmonicParameters(int channel, List<double> defaultHarmonics)
         {
             this.Channel = channel;
             this.Harmonics = defaultHarmonics;

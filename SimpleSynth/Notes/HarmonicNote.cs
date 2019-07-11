@@ -9,23 +9,24 @@ namespace SimpleSynth.Notes
 {
     public class HarmonicNote : NoteSegment
     {
-        public List<double> Harmonics { get; set; }
-
-        public HarmonicNote(HarmonicSynth synth, byte channel, byte note, long startTick, List<double> harmonics) : base(synth, channel, note, startTick)
+        public HarmonicNote(HarmonicSynth synth, byte channel, byte note, long startTick) : base(synth, channel, note, startTick)
         {
-            this.Harmonics = harmonics;
+
         }
 
         public override DiscreteSignal GetSignalMix()
         {
+            HarmonicSynth harmonicSynth = (HarmonicSynth)Synth;
+            List<double> harmonics = harmonicSynth.HarmonicParameters[this.Channel].Harmonics;
+
             double frequency = SynthUtils.NoteToFrequency(this.Note);
 
             // render the first harmonic in the list to prevent duplication
-            DiscreteSignal mainSignal = GetSignal(SignalType.Sine, frequency * Harmonics[0]);
+            DiscreteSignal mainSignal = GetSignal(SignalType.Sine, frequency * harmonics[0]);
 
-            for(int i = 1; i < Harmonics.Count; i++)
+            for(int i = 1; i < harmonics.Count; i++)
             {
-                DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * Harmonics[i]);
+                DiscreteSignal signal = GetSignal(SignalType.Sine, frequency * harmonics[i]);
 
                 mainSignal.CombineAdd(signal);
             }
