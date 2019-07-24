@@ -1,5 +1,6 @@
 ﻿using NWaves.Signals;
 using NWaves.Signals.Builders;
+using SimpleSynth.Parameters;
 using SimpleSynth.Synths;
 using System;
 using System.Collections.Generic;

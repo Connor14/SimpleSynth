@@ -1,4 +1,5 @@
 ﻿using SimpleSynth;
+using SimpleSynth.Parameters;
 using SimpleSynth.Synths;
 using System;
 using System.Collections.Generic;
@@ -33,15 +34,16 @@ namespace DemoProject
                     Stopwatch stopwatch = new Stopwatch();
 
                     stopwatch.Start();
-                    HarmonicSynth synth = new HarmonicSynth(stream, AdsrParameters.Short);
+                    HarmonicSynth synth = new HarmonicSynth(stream, AdsrParameters.Short, 5);
+                    //SoundFontSynth synth = new SoundFontSynth(stream, AdsrParameters.Short, File.OpenRead("C:\\Users\\schmi\\Desktop\\GMGSx.SF2"));
 
                     // modify the default HarmonicParameters for each channel to adjust the final mixed sound
-                    int maxKey = synth.HarmonicParameters.Keys.Max();
-                    foreach (int key in synth.HarmonicParameters.Keys)
-                    {
-                        Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicParameters[key].Instrument);
-                        synth.HarmonicParameters[key].SetHarmonics((key % 2 + 1) * 2);
-                    }
+                    //int maxKey = synth.HarmonicParameters.Keys.Max();
+                    //foreach (int key in synth.HarmonicParameters.Keys)
+                    //{
+                    //    Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicParameters[key].Instrument);
+                    //    synth.HarmonicParameters[key].SetHarmonics((key % 2 + 1) * 2);
+                    //}
 
                     Console.WriteLine("Segmented in: "+ stopwatch.Elapsed.TotalSeconds);
                     stopwatch.Restart();

@@ -6,6 +6,7 @@ using NWaves.Audio;
 using NWaves.Filters;
 using NWaves.Signals;
 using SimpleSynth.Notes;
+using SimpleSynth.Parameters;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

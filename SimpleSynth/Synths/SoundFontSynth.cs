@@ -4,6 +4,7 @@ using MidiSharp.Events.Meta;
 using MidiSharp.Events.Meta.Text;
 using MidiSharp.Events.Voice;
 using MidiSharp.Events.Voice.Note;
+using NAudio.SoundFont;
 using NWaves.Audio;
 using NWaves.Filters;
 using NWaves.Signals;
@@ -20,26 +21,21 @@ using System.Threading.Tasks;
 
 namespace SimpleSynth.Synths
 {
-    public class HarmonicSynth : MidiSynth
+    public class SoundFontSynth : MidiSynth
     {
-        private IEnumerable<double> _defaultHarmonics { get; set; }
+        public SoundFont SoundFont { get; private set; }
 
         // cannot re-assign otherwise it breaks the pass-by-reference
-        public ConcurrentDictionary<int, HarmonicParameters> HarmonicParameters { get; private set; } = new ConcurrentDictionary<int, HarmonicParameters>();
+        public ConcurrentDictionary<int, SoundFontParameters> SoundFontParameters { get; private set; } = new ConcurrentDictionary<int, SoundFontParameters>();
 
-        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, IEnumerable<double> defaultHarmonics) : base(midiStream, adsrParameters)
+        public SoundFontSynth(Stream midiStream, AdsrParameters adsrParameters, Stream soundFontStream) : base(midiStream, adsrParameters)
         {
-            this._defaultHarmonics = defaultHarmonics;
+            this.SoundFont = new SoundFont(soundFontStream);
 
             this.Segments = GetSegments(); // this MUST be called here and NOT in the base class because HarmonicCount and AllHarmonics need to be initialized
         }
 
-        public HarmonicSynth(Stream midiStream, AdsrParameters adsrParameters, int defaultHarmonicCount = 10)
-            : this(midiStream, adsrParameters, Enumerable.Range(1, defaultHarmonicCount).Select(x => (double)x))
-        {
-        }
-
-        // implementation is used by the base class
+        // modified version of HarmonicSynth
         protected override List<NoteSegment> GetSegments()
         {
             List<NoteSegment> allSegments = new List<NoteSegment>();
@@ -77,23 +73,21 @@ namespace SimpleSynth.Synths
                     {
                         Type midiEventType = midiEvent.GetType();
 
-                        // add new harmonic channel if it doesn't exist.
-                        if(midiEventType.IsSubclassOf(typeof(VoiceMidiEvent)))
+                        // add new sound font object if we don't already have one for this channel
+                        if (midiEventType.IsSubclassOf(typeof(VoiceMidiEvent)))
                         {
                             VoiceMidiEvent e = (VoiceMidiEvent)midiEvent;
 
-                            if (!HarmonicParameters.ContainsKey(e.Channel))
+                            if (!SoundFontParameters.ContainsKey(e.Channel))
                             {
-                                // use ToList to create a NEW list because every HarmonicChannel is referring to _defaultHarmonics.
-                                // If we don't make a NEW list, then if we edit the harmonics of one channel, they all change
-                                HarmonicParameters[e.Channel] = new HarmonicParameters(e.Channel, _defaultHarmonics.ToList());
+                                SoundFontParameters[e.Channel] = new SoundFontParameters(e.Channel);
                             }
                         }
 
                         if (midiEventType == typeof(OnNoteVoiceMidiEvent))
                         {
                             OnNoteVoiceMidiEvent e = (OnNoteVoiceMidiEvent)midiEvent;
-                            segments.Add(new HarmonicNote(this, e.Channel, e.Note, currentTick));
+                            segments.Add(new SoundFontNote(this, e.Channel, e.Note, currentTick));
                         }
                         else if (midiEventType == typeof(OffNoteVoiceMidiEvent))
                         {
@@ -114,7 +108,8 @@ namespace SimpleSynth.Synths
                         {
                             ProgramChangeVoiceMidiEvent e = (ProgramChangeVoiceMidiEvent)midiEvent;
 
-                            HarmonicParameters[e.Channel].SetInstrument(e.Number);
+                            SoundFontParameters[e.Channel].SetInstrument(e.Number);
+                            SoundFontParameters[e.Channel].SetSampleHeader(SoundFont.SampleHeaders[e.Number]);
                         }
                     }
 
