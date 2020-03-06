@@ -14,56 +14,38 @@ namespace DemoProject
     {
         static void Main(string[] args)
         {
-            Task.Run(async () =>
+            Console.Write("Enter path to MIDI: ");
+            string inputMidi = Console.ReadLine();
+
+            Console.Write("Enter WAV output path: ");
+            string outputWav = Console.ReadLine();
+
+            Console.Write("Enter harmonic count: ");
+            int harmonicCount = int.Parse(Console.ReadLine());
+
+            Console.WriteLine("Starting...");
+            using (var stream = File.OpenRead(inputMidi))
             {
-                Console.Write("Enter path to MIDI: ");
-                string inputMidi = Console.ReadLine();
+                Stopwatch stopwatch = new Stopwatch();
 
-                Console.Write("Enter WAV output path: ");
-                string outputWav = Console.ReadLine();
+                stopwatch.Start();
+                MidiSynth synth = new HarmonicSynth(stream, harmonicCount, AdsrParameters.Default);
 
-                // Not used if we call SetHarmonics below
-                //Console.Write("Harmonic count: ");
-                //string inputHarmonicCount = Console.ReadLine();
+                MemoryStream result = synth.GenerateWAV();
 
-                //int harmonicCount = int.Parse(inputHarmonicCount);
+                stopwatch.Stop();
+                Console.WriteLine("Rendered in: " + stopwatch.Elapsed.TotalSeconds);
 
-                Console.WriteLine("Starting...");
-                using (var stream = File.OpenRead(inputMidi))
+                using (var outputStream = File.OpenWrite(outputWav))
                 {
-                    Stopwatch stopwatch = new Stopwatch();
-
-                    stopwatch.Start();
-                    HarmonicSynth synth = new HarmonicSynth(stream, AdsrParameters.Short, 5);
-                    //SoundFontSynth synth = new SoundFontSynth(stream, AdsrParameters.Short, File.OpenRead("C:\\Users\\schmi\\Desktop\\GMGSx.SF2"));
-
-                    // modify the default HarmonicParameters for each channel to adjust the final mixed sound
-                    //int maxKey = synth.HarmonicParameters.Keys.Max();
-                    //foreach (int key in synth.HarmonicParameters.Keys)
-                    //{
-                    //    Console.WriteLine("Channel: " + key + ", Instrument: " + synth.HarmonicParameters[key].Instrument);
-                    //    synth.HarmonicParameters[key].SetHarmonics((key % 2 + 1) * 2);
-                    //}
-
-                    Console.WriteLine("Segmented in: "+ stopwatch.Elapsed.TotalSeconds);
-                    stopwatch.Restart();
-
-                    MemoryStream result = await synth.GenerateWAV();
-
-                    stopwatch.Stop();
-                    Console.WriteLine("Rendered in: " + stopwatch.Elapsed.TotalSeconds);
-
-                    using (var outputStream = File.OpenWrite(outputWav))
-                    {
-                        result.CopyTo(outputStream);
-                    }
-
-                    result.Dispose();
+                    result.CopyTo(outputStream);
                 }
 
-                Console.WriteLine("Done");
-                Console.ReadLine();
-            }).Wait();
+                result.Dispose();
+            }
+
+            Console.WriteLine("Done");
+            Console.ReadLine();
         }
     }
 }

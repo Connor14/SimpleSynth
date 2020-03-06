@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleSynth
+namespace SimpleSynth.Extensions
 {
-    public static class SignalExtensions
+    public static class DiscreteSignalExtensions
     {
         // Average two signals together
         public static void CombineAverage(this DiscreteSignal mainSignal, DiscreteSignal signal)

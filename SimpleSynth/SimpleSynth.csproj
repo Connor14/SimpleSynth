@@ -14,7 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MidiSharp" Version="0.9.6516.2348" />
     <PackageReference Include="NAudio" Version="1.10.0" />
     <PackageReference Include="NWaves" Version="0.9.3" />
   </ItemGroup>

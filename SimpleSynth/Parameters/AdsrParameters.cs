@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SimpleSynth.Parameters
+﻿namespace SimpleSynth.Parameters
 {
     public class AdsrParameters
     {
@@ -26,9 +22,9 @@ namespace SimpleSynth.Parameters
             ReleaseTime = releaseTime;
         }
 
-        public double GetSustainTime(double DurationSeconds)
+        public double GetSustainTime(double durationSeconds)
         {
-            return DurationSeconds - (AttackTime + DecayTime + ReleaseTime);
+            return durationSeconds - (AttackTime + DecayTime + ReleaseTime);
         }
 
     }

@@ -1,175 +1,110 @@
-﻿using MidiSharp;
-using MidiSharp.Events;
-using MidiSharp.Events.Meta;
-using MidiSharp.Events.Voice.Note;
+﻿using NAudio.Midi;
 using NWaves.Audio;
-using NWaves.Filters;
 using NWaves.Signals;
+using SimpleSynth.Extensions;
 using SimpleSynth.Notes;
 using SimpleSynth.Parameters;
+using SimpleSynth.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SimpleSynth.Synths
 {
     public abstract class MidiSynth
     {
-        public AdsrParameters AdsrParameters { get; set; }
+        public MidiFile MidiFile { get; private set; }
 
-        public MidiSequence Sequence { get; set; }
+        public AdsrParameters AdsrParameters { get; private set; }
 
-        // the total number of ticks in this sequence
-        public long TickCount { get; protected set; }
+        public double MicrosecondsPerTick { get; private set; }
+        public int TotalDurationSamples { get; private set; }
 
-        public TimeSpan Duration
-        {
-            get
-            {
-                return TimeSpan.FromSeconds(DurationSeconds);
-            }
-        }
-
-        // the duration of the MIDI in seconds
-        public double DurationSeconds
-        {
-            get
-            {
-                int ticksPerBeat = Sequence.Division; // 192 ticks/beat
-                int microsecondsPerBeat = TempoMicroSecondsPerBeat; // 600000 uS / beat
-
-                double microsecondsPerTick = (double)microsecondsPerBeat / ticksPerBeat;
-                long totalMicroseconds = (long)(TickCount * microsecondsPerTick);
-
-                return (double)totalMicroseconds / 1000000;
-            }
-        }
-
-        // the duratioon of the MIDI in samples
-        public int DurationSamples
-        {
-            get
-            {
-                return (int)(SynthConsts.SAMPLE_RATE * DurationSeconds);
-            }
-        }
-
-
-        // the MIDI tempo in microseconds / quarter note
-        public int TempoMicroSecondsPerBeat { get; protected set; } = -1; // MUST be initialized to -1
-
-        // The Tempo in BPM
-        public int TempoBeatsPerMinute
-        {
-            get
-            {
-                return SynthConsts.MICROSECONDS_PER_MINUTE / TempoMicroSecondsPerBeat;
-            }
-        }
-
-        // All of the note data including their start times, durations, etc
-        public List<NoteSegment> Segments { get; set; }
+        public List<NoteSegment> NoteSegments { get; private set; }
 
         public MidiSynth(Stream midiStream, AdsrParameters adsrParameters = null)
         {
-            Sequence = MidiSequence.Open(midiStream);
-
+            MidiFile = new MidiFile(midiStream, true);
             AdsrParameters = adsrParameters;
+
+            TempoEvent tempoEvent = MidiFile.Events[0].OfType<TempoEvent>().First();
+
+            int ticksPerBeat = MidiFile.DeltaTicksPerQuarterNote;
+            int microsecondsPerBeat = tempoEvent.MicrosecondsPerQuarterNote;
+
+            MicrosecondsPerTick = (double)microsecondsPerBeat / (double)ticksPerBeat;
+
+            NoteSegments = new List<NoteSegment>();
+
+            // for each track, select all of the NoteOnEvents and turn them into NoteSegments
+            for (int track = 0; track < MidiFile.Tracks; track++)
+            {
+                var noteOnSegments = MidiFile.Events[track].OfType<NoteOnEvent>().Select(midiEvent => new NoteSegment(this, track, midiEvent as NoteOnEvent));
+
+                NoteSegments.AddRange(noteOnSegments);
+            }
+
+            TotalDurationSamples = NoteSegments.Max(segment => segment.StartSample + segment.DurationSamples);
         }
 
-        protected abstract List<NoteSegment> GetSegments();
-
-        public async Task<MemoryStream> GenerateWAV()
+        public async Task<MemoryStream> GenerateWAVAsync()
         {
-            return await Task.Run(() => { return GenerateWAVSynchronous(); });
+            return await Task.Run(() => { return GenerateWAV(); });
         }
 
-        private MemoryStream GenerateWAVSynchronous()
+        public MemoryStream GenerateWAV()
         {
-            // store frequently used notes
-            ConcurrentDictionary<Tuple<byte, byte, long>, NoteSegment> segmentCache = new ConcurrentDictionary<Tuple<byte, byte, long>, NoteSegment>();
-            // store the frequently used signals
-            ConcurrentDictionary<Tuple<byte, byte, long>, DiscreteSignal> noteSignals = new ConcurrentDictionary<Tuple<byte, byte, long>, DiscreteSignal>();
+            // store duplicate notes for reuse
+            ConcurrentDictionary<Tuple<int, int, int, int>, NoteSegment> noteSegmentCache = new ConcurrentDictionary<Tuple<int, int, int, int>, NoteSegment>();
 
-            // generate signals in parallel
-            // saves significant amounts of time (Abundant Music.mid finished in 8 seconds syncronously @ 10 harmonics, 2.3 in parallel @ 10 harmonics)
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            // store generated signals for each item in the cache
+            ConcurrentDictionary<Tuple<int, int, int, int>, DiscreteSignal> signalCache = new ConcurrentDictionary<Tuple<int, int, int, int>, DiscreteSignal>();
 
             // find duplicate note segments
-            foreach (var segment in Segments)
+            foreach (var segment in NoteSegments)
             {
-                Tuple<byte, byte, long> identifier = segment.Identifier;
-
-                if (!segmentCache.ContainsKey(identifier))
+                // If the cache does not contain the key, add it
+                if (!noteSegmentCache.ContainsKey(segment.Identifier))
                 {
-                    segmentCache[identifier] = segment; // cache the first of a repeated signal
+                    noteSegmentCache[segment.Identifier] = segment; // cache the first of a repeated signal
                 }
             }
 
-            // generate signals for duplicate notes
-            List<NoteSegment> cachedSegments = segmentCache.Select(x => x.Value).ToList();
-            Parallel.ForEach(cachedSegments, segment =>
+            // generate required signals in parallel
+            Parallel.ForEach(noteSegmentCache, segment =>
             {
-                noteSignals[segment.Identifier] = segment.GetSignalMix();
+                signalCache[segment.Value.Identifier] = Render(segment.Value);
             });
 
-            Debug.WriteLine("Rendering: " + stopwatch.Elapsed.TotalSeconds);
-            stopwatch.Restart();
-
-            float[] samples = new float[DurationSamples];
-
-            // there was inconsistent sound between MIDI files because they had slightly different event orders and the averaging of the signals was the wrong way to do things
-            // With the averaging method, we could make it top or bottom heavy depending on the sort. 
-            //var OrdedSegments = Segments.OrderBy(seg => seg.Note).ThenByDescending(seg => seg.DurationSamples);
-            //Console.WriteLine(OrdedSegments.First().DurationSamples + " " + OrdedSegments.First().Note);
+            float[] samples = new float[TotalDurationSamples];
 
             // assemble the final wav
-            foreach (NoteSegment segment in Segments)
+            foreach (NoteSegment segment in NoteSegments)
             {
-                if (segment.Channel == (byte)SpecialChannel.Percussion)
+                // Skip the percussion channnel
+                if (segment.NoteOnEvent.Channel == 10)
                 {
                     continue;
                 }
 
-                Tuple<byte, byte, long> identifier = segment.Identifier;
+                DiscreteSignal segmentSignal = signalCache[segment.Identifier];
 
                 long startSample = segment.StartSample;
 
-                DiscreteSignal segmentSignal = noteSignals[identifier];
-
                 for (long i = 0; i < segmentSignal.Samples.Length; i++)
                 {
-                    // NOTE: Averaging the frequencies wasn't mathematically correct. 
-                    // Adding them and then normalizing later gives the proper sound, regardless of MIDI order
                     samples[startSample + i] = samples[startSample + i] + segmentSignal.Samples[i]; // add the samples together
                 }
             }
-
-            stopwatch.Stop();
-            Debug.WriteLine("Combining: " + stopwatch.Elapsed.TotalSeconds);
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 
             signal.NormalizeAmplitude(.9f); // adjust the samples to fit between [-1, 1)
 
-            //var filter = new CombFeedforwardFilter(25);
-            //signal = filter.ApplyTo(signal);
-
-            //var frequency = 800/*Hz*/;
-            //var notchFilter = new NotchFilter(frequency / signal.SamplingRate);
-            //signal = notchFilter.ApplyTo(signal);
-
-            // NOTE: I don't believe this is necessary when using the correct sample adding technique. I don't hear ANY pops.
-            //var maFilter = new MovingAverageFilter();
-            //signal = maFilter.ApplyTo(signal);
-
-            MemoryStream output = null;
+            MemoryStream output;
             using (MemoryStream stream = new MemoryStream())
             {
                 var waveFile = new WaveFile(signal, 32);
@@ -179,5 +114,12 @@ namespace SimpleSynth.Synths
 
             return output;
         }
+
+        /// <summary>
+        /// The logic to turn NoteSegments into DiscreteSignals
+        /// </summary>
+        /// <param name="segment"></param>
+        /// <returns></returns>
+        protected abstract DiscreteSignal Render(NoteSegment segment);
     }
 }
