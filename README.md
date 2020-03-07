@@ -62,4 +62,4 @@ I would like to implement more synths for a wider range of sounds. Maybe even a 
 
 I would like to improve the efficiency of the synthesis where I can. 
 
-I would like to implement "on-line" / realtime synthesis a playback or a MIDI file.
+I would like to implement "on-line" / realtime synthesis and playback for MIDI files.
