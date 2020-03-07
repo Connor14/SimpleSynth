@@ -13,7 +13,7 @@ namespace SimpleSynth.Utilities
         Square
     }
 
-    public static class Renderer
+    public static class SignalHelper
     {
         public static DiscreteSignal GetSignal(SignalType signalType, double frequency, int sampleCount)
         {

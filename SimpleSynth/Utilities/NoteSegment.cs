@@ -1,9 +1,8 @@
 ﻿using NAudio.Midi;
 using SimpleSynth.Synths;
-using SimpleSynth.Utilities;
 using System;
 
-namespace SimpleSynth.Notes
+namespace SimpleSynth.Utilities
 {
     public class NoteSegment
     {

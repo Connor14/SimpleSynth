@@ -1,9 +1,6 @@
 ﻿using NWaves.Signals;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleSynth.Extensions
 {
@@ -14,7 +11,7 @@ namespace SimpleSynth.Extensions
         {
             if (mainSignal.Samples.Length != signal.Samples.Length)
             {
-                throw new Exception();
+                throw new ArgumentException();
             }
 
             for (int i = 0; i < mainSignal.Samples.Length; i++)
@@ -23,12 +20,18 @@ namespace SimpleSynth.Extensions
             }
         }
 
-        // Add the amplitudes of each signal together
+        /// <summary>
+        /// Add the amplitudes of each signal together.
+        /// 
+        /// Similar to Superimpose but doesn't create a copy of a signal
+        /// </summary>
+        /// <param name="mainSignal"></param>
+        /// <param name="signal"></param>
         public static void CombineAdd(this DiscreteSignal mainSignal, DiscreteSignal signal)
         {
             if (mainSignal.Samples.Length != signal.Samples.Length)
             {
-                throw new Exception();
+                throw new ArgumentException();
             }
 
             for (int i = 0; i < mainSignal.Samples.Length; i++)
@@ -42,7 +45,7 @@ namespace SimpleSynth.Extensions
         {
             if (mainSignal.Samples.Length != signal.Samples.Length)
             {
-                throw new Exception();
+                throw new ArgumentException();
             }
 
             for (int i = 0; i < mainSignal.Samples.Length; i++)
@@ -60,12 +63,12 @@ namespace SimpleSynth.Extensions
         {
             if(maximumAmplitude < -1 || maximumAmplitude >= 1)
             {
-                throw new Exception("Amplitude must be in range [-1f, 1f)");
+                throw new ArgumentException("Amplitude must be in range [-1f, 1f)");
             }
 
             if (mainSignal.Samples.Length == 0)
             {
-                throw new Exception("Signal has no samples.");
+                throw new ArgumentException("Signal has no samples.");
             }
 
             // Amplify based on the maximum / minimum amplitues so that the new max/min are 1
