@@ -60,6 +60,6 @@ See `DemoProject` for a more detailed example.
 
 I would like to implement more synths for a wider range of sounds. Maybe even a SoundFont synth.
 
-I would like to improve on the efficiency of the rendering if I can. 
+I would like to improve the efficiency of the synthesis where I can. 
 
-I would like to implement "on-line" / realtime rendering a playback or a MIDI file.
+I would like to implement "on-line" / realtime synthesis a playback or a MIDI file.
