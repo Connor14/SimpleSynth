@@ -19,16 +19,13 @@ namespace DemoProject
             Console.Write("Enter WAV output path: ");
             string outputWav = Console.ReadLine();
 
-            Console.Write("Enter harmonic count: ");
-            int harmonicCount = int.Parse(Console.ReadLine());
-
             Console.WriteLine("Starting...");
             using (var stream = File.OpenRead(inputMidi))
             {
                 Stopwatch stopwatch = new Stopwatch();
 
                 stopwatch.Start();
-                MidiSynth synth = new HarmonicSynth(stream, harmonicCount, AdsrParameters.Default);
+                MidiSynth synth = new BasicSynth(stream, AdsrParameters.Default);
                 synth.ProgressChanged += Synth_ProgressChanged;
 
                 MemoryStream result = synth.GenerateWAV();

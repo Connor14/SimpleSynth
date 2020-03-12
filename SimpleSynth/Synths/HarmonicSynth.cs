@@ -35,12 +35,7 @@ namespace SimpleSynth.Synths
 
             if (AdsrParameters != null)
             {
-                DiscreteSignal adsr = SignalHelper.GetAdsrEnvelope(frequency, AdsrParameters, segment.DurationSamples);
-
-                for (int i = 0; i < mainSignal.Samples.Length; i++)
-                {
-                    mainSignal[i] = mainSignal.Samples[i] * adsr.Samples[i] * .5f;
-                }
+                mainSignal.ApplyAdsr(SignalHelper.GetAdsrEnvelope(AdsrParameters, segment.DurationSamples));
             }
 
             return mainSignal;

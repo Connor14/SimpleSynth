@@ -114,7 +114,7 @@ namespace SimpleSynth.Synths
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 
-            signal.NormalizeAmplitude(.9f); // adjust the samples to fit between [-1, 1)
+            signal.ScaleAmplitude(1f); // adjust the samples to fit between [-1, 1]
 
             OnProgressChanged(new GenerationProgressChangedEventArgs(4, 5, "Wave normalization", stopwatch.Elapsed));
             stopwatch.Restart();

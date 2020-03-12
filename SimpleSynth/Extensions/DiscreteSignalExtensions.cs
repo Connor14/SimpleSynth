@@ -54,16 +54,28 @@ namespace SimpleSynth.Extensions
             }
         }
 
-        // Make the maximum amplitudes equal to the given maximum amplitude
-        // todo: is Normalize the correct terminology?
-
-        // According to https://stackoverflow.com/questions/12112945/audio-units-samples-value-range
-        // float values can range from [-1, 1). 1 will clip to 0.
-        public static void NormalizeAmplitude(this DiscreteSignal mainSignal, float maximumAmplitude = .9f)
+        // Apply the ADSR envelope to the main signal
+        public static void ApplyAdsr(this DiscreteSignal mainSignal, DiscreteSignal adsrSignal)
         {
-            if(maximumAmplitude < -1 || maximumAmplitude >= 1)
+            if (mainSignal.Samples.Length != adsrSignal.Samples.Length)
             {
-                throw new ArgumentException("Amplitude must be in range [-1f, 1f)");
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < mainSignal.Samples.Length; i++)
+            {
+                mainSignal[i] = mainSignal.Samples[i] * adsrSignal.Samples[i];
+            }
+        }
+
+        // Make the maximum amplitudes equal to the given maximum amplitude
+        // Theoretically, float values can range from [-1, 1] though at one point (for some reason) I was under the impressing that 1 would clip to 0
+        // I think that was according to this: https://stackoverflow.com/questions/12112945/audio-units-samples-value-range
+        public static void ScaleAmplitude(this DiscreteSignal mainSignal, float maximumAmplitude = 1f)
+        {
+            if (maximumAmplitude < -1 || maximumAmplitude > 1)
+            {
+                throw new ArgumentOutOfRangeException("Amplitude must be in range [-1f, 1f].");
             }
 
             if (mainSignal.Samples.Length == 0)
@@ -79,6 +91,21 @@ namespace SimpleSynth.Extensions
             float multiplier = maximumAmplitude / greater;
 
             mainSignal.Amplify(multiplier);
+
+            // Check the new minimums and maximums. This might reveal issues with the floating point math
+            float postAmplifyMax = mainSignal.Samples.Max();
+            float postAmplifyMin = mainSignal.Samples.Min();
+
+            if(postAmplifyMin < -1 || postAmplifyMax > 1)
+            {
+                throw new Exception(
+                    string.Format(
+                        "Maximum or minimum amplitude after amplification was not in the valid range of [-1, 1]. Maximum amplitude: {0}; Minimum amplitude: {1}", 
+                        postAmplifyMax, 
+                        postAmplifyMin
+                    )
+                );
+            }
         }
     }
 }

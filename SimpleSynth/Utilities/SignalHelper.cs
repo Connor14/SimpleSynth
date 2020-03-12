@@ -24,34 +24,35 @@ namespace SimpleSynth.Utilities
                 case SignalType.Sine:
                     signal = new SineBuilder()
                         .SetParameter("frequency", frequency)
-                        .SetParameter("phase", Math.PI / 6)
+                        .SetParameter("low", -1f)
+                        .SetParameter("high", 1f)
                         .OfLength(sampleCount)
                         .SampledAt(Constants.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Sawtooth:
                     signal = new SawtoothBuilder()
-                        .SetParameter("low", -0.3f)
-                        .SetParameter("high", 0.3f)
-                        .SetParameter("freq", frequency)
+                        .SetParameter("frequency", frequency)
+                        .SetParameter("low", -1f)
+                        .SetParameter("high", 1f)
                         .OfLength(sampleCount)
                         .SampledAt(Constants.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Triangle:
                     signal = new TriangleWaveBuilder()
-                        .SetParameter("low", -0.3f)
-                        .SetParameter("high", 0.3f)
-                        .SetParameter("freq", frequency)
+                        .SetParameter("frequency", frequency)
+                        .SetParameter("low", -1f)
+                        .SetParameter("high", 1f)
                         .OfLength(sampleCount)
                         .SampledAt(Constants.SAMPLE_RATE)
                         .Build();
                     break;
                 case SignalType.Square:
                     signal = new SquareWaveBuilder()
-                        .SetParameter("low", -0.25f)
-                        .SetParameter("high", 0.25f)
-                        .SetParameter("freq", frequency)
+                        .SetParameter("frequency", frequency)
+                        .SetParameter("low", -1f)
+                        .SetParameter("high", 1f)
                         .OfLength(sampleCount)
                         .SampledAt(Constants.SAMPLE_RATE)
                         .Build();
@@ -63,15 +64,16 @@ namespace SimpleSynth.Utilities
             return signal;
         }
 
-        public static DiscreteSignal GetAdsrEnvelope(double frequency, AdsrParameters adsrParameters, int sampleCount)
+        public static DiscreteSignal GetAdsrEnvelope(AdsrParameters adsrParameters, int sampleCount)
         {
             DiscreteSignal signal = 
                 new AdsrBuilder(
-                    adsrParameters.AttackTime, 
-                    adsrParameters.DecayTime, 
-                    adsrParameters.GetSustainTime(Conversions.ConvertSamplesToSeconds(sampleCount)),
-                    adsrParameters.ReleaseTime
+                    adsrParameters.AttackDuration, 
+                    adsrParameters.DecayDuration, 
+                    adsrParameters.GetSustainDurationSeconds(Conversions.ConvertSamplesToSeconds(sampleCount)),
+                    adsrParameters.ReleaseDuration
                 )
+                .SetParameter("attackAmp", adsrParameters.AttackAmplitude)
                 .OfLength(sampleCount)
                 .SampledAt(Constants.SAMPLE_RATE)
                 .Build();
