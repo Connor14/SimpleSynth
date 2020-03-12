@@ -2,8 +2,7 @@
 {
     public class AdsrParameters
     {
-        // https://blog.landr.com/adsr-envelopes-infographic/
-        // need to play with the Sustain time as well
+        // A good reference: https://blog.landr.com/adsr-envelopes-infographic/
 
         // Example timings:
         //          attackTime,     decayTime,  releaseTime
@@ -14,7 +13,6 @@
         public static AdsrParameters Default = new AdsrParameters(0.05, 0.1, 1, 0.075, 1.5);
         public static AdsrParameters Long = new AdsrParameters(0.1, 0.2, 1, 0.15, 1.5);
 
-        // Timings
         /// <summary>
         /// The length of the Attack phase in seconds
         /// </summary>
@@ -40,7 +38,7 @@
         public double ReleaseDuration { get; set; }
 
         /// <summary>
-        /// The maximum amplitude tha the Attack phase will reach
+        /// The maximum amplitude that the Attack phase will reach
         /// </summary>
         public double AttackAmplitude { get; set; }
 
