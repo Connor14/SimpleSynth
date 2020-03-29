@@ -12,7 +12,7 @@ I created this project so that I had a simple way to create WAV files out of the
 ##### SimpleSynth
 
 * .NET Standard 2.1
-* NAudio (https://github.com/naudio/NAudio)
+* MidiSharp (https://github.com/stephentoub/MidiSharp)
 * NWaves (https://github.com/ar1st0crat/NWaves)
 
 ##### DemoProject
@@ -48,9 +48,9 @@ See `DemoProject` for a more detailed example.
 
 ## License Information
 
-##### NAudio
+##### MidiSharp
 
-**NAudio** is listed under the *MS-PL* license.
+**MidiSharp** is listed under the *MIT* license and includes *Copyright (c) 2014 Stephen Toub*.
 
 ##### NWaves
 

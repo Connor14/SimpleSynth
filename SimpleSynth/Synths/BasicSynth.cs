@@ -20,7 +20,7 @@ namespace SimpleSynth.Synths
 
         protected override DiscreteSignal Render(NoteSegment segment)
         {
-            double frequency = Conversions.NoteToFrequency(segment.NoteOnEvent.NoteNumber);
+            double frequency = Conversions.NoteToFrequency(segment.NoteOnEvent.MidiEvent.Note);
 
             // Combine a Sine wave and a Square wave 
             DiscreteSignal mainSignal = SignalHelper.GetSignal(SignalType.Sine, frequency, segment.DurationSamples);

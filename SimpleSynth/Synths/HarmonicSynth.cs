@@ -20,7 +20,7 @@ namespace SimpleSynth.Synths
 
         protected override DiscreteSignal Render(NoteSegment segment)
         {
-            double frequency = Conversions.NoteToFrequency(segment.NoteOnEvent.NoteNumber);
+            double frequency = Conversions.NoteToFrequency(segment.NoteOnEvent.MidiEvent.Note);
 
             // render the first harmonic in the list to prevent duplication
             DiscreteSignal mainSignal = SignalHelper.GetSignal(SignalType.Sine, frequency * 1, segment.DurationSamples);
