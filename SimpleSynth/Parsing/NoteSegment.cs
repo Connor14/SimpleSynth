@@ -1,9 +1,11 @@
 ﻿using MidiSharp.Events;
 using MidiSharp.Events.Voice.Note;
+using SimpleSynth.Parsing;
 using SimpleSynth.Synths;
+using SimpleSynth.Utilities;
 using System;
 
-namespace SimpleSynth.Utilities
+namespace SimpleSynth.Parsing
 {
     public class NoteSegment
     {
@@ -27,18 +29,18 @@ namespace SimpleSynth.Utilities
         /// 
         /// This does NOT uniquely identify a note. Rather, it is used to determine if a note can be reused. 
         /// </summary>
-        public Tuple<int, byte, int, byte> Identifier { get; private set; }
+        public (int Track, byte Channel, int DurationSamples, byte Note) Identifier { get; private set; }
 
-        public NoteSegment(MidiSynth synth, int track, MidiEventWithTime<OnNoteVoiceMidiEvent> noteOnEvent, MidiEventWithTime<OffNoteVoiceMidiEvent> noteOffEvent)
+        public NoteSegment(MidiInterpretation interpretation, int track, MidiEventWithTime<OnNoteVoiceMidiEvent> noteOnEvent, MidiEventWithTime<OffNoteVoiceMidiEvent> noteOffEvent)
         {
             Track = track;
             NoteOnEvent = noteOnEvent;
             NoteOffEvent = noteOffEvent;
 
-            StartSample = Conversions.ConvertTicksToSamples(synth.MicrosecondsPerTick, NoteOnEvent.Time);
-            DurationSamples = Conversions.ConvertTicksToSamples(synth.MicrosecondsPerTick, NoteOffEvent.Time - NoteOnEvent.Time);
+            StartSample = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOnEvent.Time);
+            DurationSamples = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOffEvent.Time - NoteOnEvent.Time);
 
-            Identifier = new Tuple<int, byte, int, byte>(Track, NoteOnEvent.MidiEvent.Channel, DurationSamples, NoteOnEvent.MidiEvent.Note);
+            Identifier = (Track, NoteOnEvent.MidiEvent.Channel, DurationSamples, NoteOnEvent.MidiEvent.Note);
         }
     }
 }

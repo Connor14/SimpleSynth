@@ -1,6 +1,7 @@
 ﻿using NWaves.Signals;
 using SimpleSynth.Extensions;
 using SimpleSynth.Parameters;
+using SimpleSynth.Parsing;
 using SimpleSynth.Utilities;
 using System.IO;
 
@@ -12,7 +13,7 @@ namespace SimpleSynth.Synths
 
         public int HarmonicCount { get; private set; }
 
-        public HarmonicSynth(Stream midiStream, int harmonicCount, AdsrParameters adsrParameters) : base(midiStream)
+        public HarmonicSynth(MidiInterpretation interpretation, int harmonicCount, AdsrParameters adsrParameters) : base(interpretation)
         {
             HarmonicCount = harmonicCount;
             AdsrParameters = adsrParameters;

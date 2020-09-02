@@ -1,5 +1,6 @@
 ﻿using SimpleSynth.EventArguments;
 using SimpleSynth.Parameters;
+using SimpleSynth.Parsing;
 using SimpleSynth.Synths;
 using System;
 using System.Diagnostics;
@@ -25,7 +26,8 @@ namespace DemoProject
                 Stopwatch stopwatch = new Stopwatch();
 
                 stopwatch.Start();
-                MidiSynth synth = new BasicSynth(stream, AdsrParameters.Default);
+                var interpretation = new MidiInterpretation(stream);
+                MidiSynth synth = new BasicSynth(interpretation, AdsrParameters.Default);
                 synth.ProgressChanged += Synth_ProgressChanged;
 
                 MemoryStream result = synth.GenerateWAV();

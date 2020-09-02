@@ -1,6 +1,7 @@
 ﻿using NWaves.Signals;
 using SimpleSynth.Extensions;
 using SimpleSynth.Parameters;
+using SimpleSynth.Parsing;
 using SimpleSynth.Utilities;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace SimpleSynth.Synths
     {
         public AdsrParameters AdsrParameters { get; private set; }
 
-        public BasicSynth(Stream midiStream, AdsrParameters adsrParameters) : base(midiStream)
+        public BasicSynth(MidiInterpretation interpretation, AdsrParameters adsrParameters) : base(interpretation)
         {
             AdsrParameters = adsrParameters;
         }

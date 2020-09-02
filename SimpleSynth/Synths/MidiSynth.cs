@@ -6,6 +6,7 @@ using NWaves.Audio;
 using NWaves.Signals;
 using SimpleSynth.EventArguments;
 using SimpleSynth.Extensions;
+using SimpleSynth.Parsing;
 using SimpleSynth.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -22,78 +23,11 @@ namespace SimpleSynth.Synths
     {
         private readonly Stopwatch stopwatch = new Stopwatch();
 
-        public MidiSequence MidiFile { get; private set; }
-        public double MicrosecondsPerTick { get; private set; }
-        public int TotalDurationSamples { get; private set; }
-        public List<NoteSegment> NoteSegments { get; private set; }
+        public MidiInterpretation Interpretation { get; private set; }
 
-        public MidiSynth(Stream midiStream)
+        public MidiSynth(MidiInterpretation interpretation)
         {
-            MidiFile = MidiSequence.Open(midiStream);
-
-            TempoMetaMidiEvent tempoEvent = MidiFile.Tracks[0].OfType<TempoMetaMidiEvent>().First();
-
-            int ticksPerBeat = MidiFile.TicksPerBeatOrFrame;
-            int microsecondsPerBeat = tempoEvent.Value; // microseconds / beat
-
-            MicrosecondsPerTick = (double)microsecondsPerBeat / (double)ticksPerBeat;
-
-            NoteSegments = new List<NoteSegment>();
-
-            // Calculate the absolute times for all events in each track
-            // Also pair note on events with note off events
-            for (int track = 0; track < MidiFile.Tracks.Count; track++)
-            {
-                // Key is a tuple of Channel and Note
-                var onEvents = new Dictionary<(byte Channel, int Note), Queue<MidiEventWithTime<OnNoteVoiceMidiEvent>>>();
-
-                long time = 0;
-                foreach (var midiEvent in MidiFile.Tracks[track].Events)
-                {
-                    if (midiEvent.DeltaTime > 0)
-                    {
-                        time += midiEvent.DeltaTime;
-                    }
-
-                    if(midiEvent is OnNoteVoiceMidiEvent onNote)
-                    {
-                        // Skip the percussion channel
-                        if (onNote.Channel == (byte)SpecialChannel.Percussion)
-                            continue;
-
-                        var onNoteIdentifier = (onNote.Channel, onNote.Note);
-
-                        if (!onEvents.ContainsKey(onNoteIdentifier))
-                        {
-                            onEvents[onNoteIdentifier] = new Queue<MidiEventWithTime<OnNoteVoiceMidiEvent>>();
-                        }
-
-                        onEvents[onNoteIdentifier].Enqueue(new MidiEventWithTime<OnNoteVoiceMidiEvent>(time, onNote));
-                    }
-                    else if (midiEvent is OffNoteVoiceMidiEvent offNote)
-                    {
-                        // Skip the percussion channel
-                        if (offNote.Channel == (byte)SpecialChannel.Percussion)
-                            continue;
-
-                        var offNoteIdentifer = (offNote.Channel, offNote.Note);
-
-                        NoteSegments.Add(new NoteSegment(
-                            this,
-                            track,
-                            onEvents[offNoteIdentifer].Dequeue(), // Get the first matching On Event 
-                            new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, offNote))
-                        );
-                    }
-                }
-            }
-
-            TotalDurationSamples = NoteSegments.Max(segment => segment.StartSample + segment.DurationSamples);
-        }
-
-        public async Task<MemoryStream> GenerateWAVAsync()
-        {
-            return await Task.Run(() => { return GenerateWAV(); });
+            Interpretation = interpretation;
         }
 
         public MemoryStream GenerateWAV()
@@ -101,10 +35,10 @@ namespace SimpleSynth.Synths
             stopwatch.Restart();
 
             // unique NoteSegments
-            Dictionary<Tuple<int, byte, int, byte>, NoteSegment> noteSegmentsToRender = new Dictionary<Tuple<int, byte, int, byte>, NoteSegment>();
+            Dictionary<(int Track, byte Channel, int DurationSamples, byte Note), NoteSegment> noteSegmentsToRender = new Dictionary<(int Track, byte Channel, int DurationSamples, byte Note), NoteSegment>();
 
             // find unique note segments
-            foreach (var segment in NoteSegments)
+            foreach (var segment in Interpretation.NoteSegments)
             {
                 // If the dictionary does not contain the segment's identifierr, add the segment
                 if (!noteSegmentsToRender.ContainsKey(segment.Identifier))
@@ -120,7 +54,7 @@ namespace SimpleSynth.Synths
             int totalToRender = noteSegmentsToRender.Count;
 
             // unique DiscreteSignals
-            ConcurrentDictionary<Tuple<int, byte, int, byte>, DiscreteSignal> signalCache = new ConcurrentDictionary<Tuple<int, byte, int, byte>, DiscreteSignal>();
+            ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note), DiscreteSignal> signalCache = new ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note), DiscreteSignal>();
 
             // generate unique signals in parallel
             Parallel.ForEach(noteSegmentsToRender, segment =>
@@ -134,10 +68,10 @@ namespace SimpleSynth.Synths
             OnProgressChanged(new GenerationProgressChangedEventArgs(2, 5, "Unique note rendering", stopwatch.Elapsed));
             stopwatch.Restart();
 
-            float[] samples = new float[TotalDurationSamples];
+            float[] samples = new float[Interpretation.TotalDurationSamples];
 
             // assemble the final wav
-            foreach (NoteSegment segment in NoteSegments)
+            foreach (NoteSegment segment in Interpretation.NoteSegments)
             {
                 DiscreteSignal segmentSignal = signalCache[segment.Identifier];
 

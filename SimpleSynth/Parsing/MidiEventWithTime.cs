@@ -3,12 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SimpleSynth.Utilities
+namespace SimpleSynth.Parsing
 {
-    public struct MidiEventWithTime<TEvent> where TEvent : MidiEvent
+    public class MidiEventWithTime<TEvent> where TEvent : MidiEvent
     {
-        public long Time { get; set; }
-        public TEvent MidiEvent { get; set; }
+        public long Time { get; }
+        public TEvent MidiEvent { get; }
 
         public MidiEventWithTime(long time, TEvent midiEvent)
         {
