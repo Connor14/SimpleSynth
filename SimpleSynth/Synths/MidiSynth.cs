@@ -88,7 +88,7 @@ namespace SimpleSynth.Synths
 
             DiscreteSignal signal = new DiscreteSignal(44100, samples);
 
-            signal.ScaleAmplitude(1f); // adjust the samples to fit between [-1, 1]
+            signal.ScaleAmplitude(0.9f); // adjust the samples to fit between [-1, 1] (using a value of 1 sometimes seems to cause clipping)
 
             OnProgressChanged(new GenerationProgressChangedEventArgs(4, 5, "Wave normalization", stopwatch.Elapsed));
             stopwatch.Restart();

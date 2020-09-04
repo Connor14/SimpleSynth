@@ -47,10 +47,6 @@ namespace SimpleSynth.Parsing
 
                     if (midiEvent is OnNoteVoiceMidiEvent onNote)
                     {
-                        // Skip the percussion channel
-                        if (onNote.Channel == (byte)SpecialChannel.Percussion)
-                            continue;
-
                         var onNoteIdentifier = (onNote.Channel, onNote.Note);
 
                         if (!onEvents.ContainsKey(onNoteIdentifier))
@@ -62,10 +58,6 @@ namespace SimpleSynth.Parsing
                     }
                     else if (midiEvent is OffNoteVoiceMidiEvent offNote)
                     {
-                        // Skip the percussion channel
-                        if (offNote.Channel == (byte)SpecialChannel.Percussion)
-                            continue;
-
                         var offNoteIdentifer = (offNote.Channel, offNote.Note);
 
                         NoteSegments.Add(new NoteSegment(

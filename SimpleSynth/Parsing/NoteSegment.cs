@@ -1,4 +1,5 @@
-﻿using MidiSharp.Events;
+﻿using MidiSharp;
+using MidiSharp.Events;
 using MidiSharp.Events.Voice.Note;
 using SimpleSynth.Parsing;
 using SimpleSynth.Synths;
@@ -12,17 +13,17 @@ namespace SimpleSynth.Parsing
         public MidiEventWithTime<OnNoteVoiceMidiEvent> NoteOnEvent;
         public MidiEventWithTime<OffNoteVoiceMidiEvent> NoteOffEvent;
 
-        public int Track;
+        public int Track { get; }
 
         /// <summary>
         /// This note's start time in samples
         /// </summary>
-        public int StartSample;
+        public int StartSample { get; }
 
         /// <summary>
         /// This note's total time in samples
         /// </summary>
-        public int DurationSamples;
+        public int DurationSamples { get; }
 
         /// <summary>
         /// Identifies this note based on its Track, Channel, Duration, and Note Number.
@@ -31,6 +32,16 @@ namespace SimpleSynth.Parsing
         /// </summary>
         public (int Track, byte Channel, int DurationSamples, byte Note) Identifier { get; private set; }
 
+        /// <summary>
+        /// Returns true if this NoteSegment represents the percussion channel.
+        /// </summary>
+        public bool IsPercussion => NoteOnEvent.MidiEvent.Channel == (byte)SpecialChannel.Percussion;
+
+        /// <summary>
+        /// Returns the general type of percussion or null if not percussion.
+        /// </summary>
+        public PercussionType? PercussionType => IsPercussion ? SignalHelper.GetPercussionType((GeneralMidiPercussion)NoteOnEvent.MidiEvent.Note) : (PercussionType?)null;
+
         public NoteSegment(MidiInterpretation interpretation, int track, MidiEventWithTime<OnNoteVoiceMidiEvent> noteOnEvent, MidiEventWithTime<OffNoteVoiceMidiEvent> noteOffEvent)
         {
             Track = track;
@@ -38,7 +49,19 @@ namespace SimpleSynth.Parsing
             NoteOffEvent = noteOffEvent;
 
             StartSample = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOnEvent.Time);
-            DurationSamples = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOffEvent.Time - NoteOnEvent.Time);
+
+            // Percussion has a fixed Duration depending on type of instrument
+
+            // TODO: this logic is too specific and not extendable. 
+            // Need to provide a different mechanism for specifying percussion note length since users of the library might want to provide their own drum synthesis
+            if(IsPercussion)
+            {
+                DurationSamples = SignalHelper.GetPercussionSampleCount(PercussionType.Value);
+            }
+            else
+            {
+                DurationSamples = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOffEvent.Time - NoteOnEvent.Time);
+            }
 
             Identifier = (Track, NoteOnEvent.MidiEvent.Channel, DurationSamples, NoteOnEvent.MidiEvent.Note);
         }
