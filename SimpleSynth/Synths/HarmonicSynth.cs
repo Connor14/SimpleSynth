@@ -7,6 +7,7 @@ using System.IO;
 
 namespace SimpleSynth.Synths
 {
+    // TODO: Need to update to be compatible with percussion.
     public class HarmonicSynth : MidiSynth
     {
         public AdsrParameters AdsrParameters { get; private set; }

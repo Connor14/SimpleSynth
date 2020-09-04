@@ -5,13 +5,15 @@ Find it on NuGet: https://www.nuget.org/packages/SimpleSynth/
 
 ## About
 
-I created this project so that I had a simple way to create WAV files out of the MIDI files from the **AbundantMusic.NET** project (https://github.com/Connor14/AbundantMusic.NET). As of right now, it just synthesizes sound using multiple harmonics of a Sine wave, but it can be easily expanded to support more forms of synthesis.
+I created this project so that I had a simple way to create WAV files out of the MIDI files from the **AbundantMusic.NET** project (https://github.com/Connor14/AbundantMusic.NET). As of right now, it just synthesizes audio using a combination of a sine wave and a square wave (`BasicSynth`) or multiple harmonics of a sine wave (`HarmonicSynth`). Support for percussion synthesis was recently added to the `BasicSynth` class. 
+
+Overall, the system can be easily expanded to support more forms of synthesis.
 
 ## Tools / Libraries
 
 ##### SimpleSynth
 
-* .NET Standard 2.1
+* .NET Standard 2.0
 * MidiSharp (https://github.com/stephentoub/MidiSharp)
 * NWaves (https://github.com/ar1st0crat/NWaves)
 
@@ -21,18 +23,20 @@ I created this project so that I had a simple way to create WAV files out of the
 
 ## Getting Started
 
-Create an instance of the `HarmonicSynth` class and run the `GenerateWAV` method. The resulting `MemoryStream` is your synthesized WAV file. You can save the `MemoryStream` to disk or consume it in some other way.
+Create an instance of the `MidiInterpretation` class and pass it to an instance of the `BasicSynth` class. Then run the `GenerateWAV` method. The resulting `MemoryStream` is your synthesized WAV file. You can save the `MemoryStream` to disk or consume it in some other way.
 
 ```
+using SimpleSynth.EventArguments;
 using SimpleSynth.Parameters;
+using SimpleSynth.Parsing;
 using SimpleSynth.Synths;
+using System;
 using System.IO;
 ...
-int harmonicCount = 5;
-
 using (var stream = File.OpenRead("YourMidiFile.mid"))
 {
-    MidiSynth synth = new HarmonicSynth(stream, harmonicCount, AdsrParameters.Default);
+    var interpretation = new MidiInterpretation(stream);
+    MidiSynth synth = new BasicSynth(interpretation, AdsrParameters.Default);
     MemoryStream result = synth.GenerateWAV();
 
     using (var outputStream = File.OpenWrite("YourOutputWave.wav"))
