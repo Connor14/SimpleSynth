@@ -1,8 +1,10 @@
 ﻿using SimpleSynth.EventArguments;
 using SimpleSynth.Parameters;
 using SimpleSynth.Parsing;
+using SimpleSynth.Providers;
 using SimpleSynth.Synths;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
@@ -24,17 +26,24 @@ namespace DemoProject
             using (var stream = File.OpenRead(inputMidi))
             {
                 Stopwatch stopwatch = new Stopwatch();
-
                 stopwatch.Start();
-                var interpretation = new MidiInterpretation(stream);
-                MidiSynth synth = new BasicSynth(interpretation, AdsrParameters.Default);
+
+                // Parse the provided MIDI file.
+                var interpretation = new MidiInterpretation(stream, new DefaultNoteSegmentProvider());
+
+                // Create a new synthesizer with default providers.
+                var synth = new BasicSynth(interpretation, new DefaultAdsrEnvelopeProvider(AdsrParameters.Short), new DefaultBalanceProvider());
+
+                // Listen for progress updates
                 synth.ProgressChanged += Synth_ProgressChanged;
 
+                // Generate the WAV file
                 MemoryStream result = synth.GenerateWAV();
 
                 stopwatch.Stop();
                 Console.WriteLine("Rendered in: " + stopwatch.Elapsed);
 
+                // Write WAV file to disk
                 using (var outputStream = File.OpenWrite(outputWav))
                 {
                     result.CopyTo(outputStream);
@@ -57,7 +66,7 @@ namespace DemoProject
                 {
                     // If the cursor is not at the beginning of the line, we are likely at the end of a line from a regular "Console.Write"
                     // In this case, go to a new line
-                    if(Console.CursorLeft != 0)
+                    if (Console.CursorLeft != 0)
                     {
                         Console.WriteLine();
                     }

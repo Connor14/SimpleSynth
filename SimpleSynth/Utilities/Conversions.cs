@@ -19,17 +19,17 @@ namespace SimpleSynth.Utilities
 
         public static int ConvertTicksToSamples(double microsecondsPerTick, long ticks)
         {
-            double microseconds = (double)ticks * microsecondsPerTick;
+            double microseconds = ticks * microsecondsPerTick;
             double seconds = (double)microseconds / (double)Constants.MICROSECONDS_PER_SECOND;
 
-            int samples = (int)((double)Constants.SAMPLE_RATE * seconds);
+            int samples = (int)(Constants.SAMPLE_RATE * seconds);
 
             return samples;
         }
 
         public static double ConvertSamplesToSeconds(int samples)
         {
-            return (double)samples / (double)Constants.SAMPLE_RATE;
+            return (double)samples / Constants.SAMPLE_RATE;
         }
     }
 }

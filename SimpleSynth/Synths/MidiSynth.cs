@@ -19,6 +19,9 @@ using System.Threading.Tasks;
 
 namespace SimpleSynth.Synths
 {
+    /// <summary>
+    /// Main synthesizer implementation. Contains all of the logic for rendering MIDI notes into samples and audio. 
+    /// </summary>
     public abstract class MidiSynth
     {
         private readonly Stopwatch stopwatch = new Stopwatch();
@@ -30,7 +33,7 @@ namespace SimpleSynth.Synths
             Interpretation = interpretation;
         }
 
-        public MemoryStream GenerateWAV()
+        public DiscreteSignal GetSignal()
         {
             stopwatch.Restart();
 
@@ -41,9 +44,9 @@ namespace SimpleSynth.Synths
             foreach (var segment in Interpretation.NoteSegments)
             {
                 // If the dictionary does not contain the segment's identifierr, add the segment
-                if (!noteSegmentsToRender.ContainsKey(segment.Identifier))
+                if (!noteSegmentsToRender.ContainsKey(segment.ReuseIdentifier))
                 {
-                    noteSegmentsToRender[segment.Identifier] = segment; // cache the first of a repeated signal
+                    noteSegmentsToRender[segment.ReuseIdentifier] = segment; // cache the first of a repeated signal
                 }
             }
 
@@ -59,7 +62,7 @@ namespace SimpleSynth.Synths
             // generate unique signals in parallel
             Parallel.ForEach(noteSegmentsToRender, segment =>
             {
-                signalCache[segment.Value.Identifier] = Render(segment.Value);
+                signalCache[segment.Value.ReuseIdentifier] = Render(segment.Value);
 
                 Interlocked.Increment(ref notesRendered);
                 OnProgressChanged(new NoteRenderedEventArguments(notesRendered, totalToRender, "Note rendered in parallel"));
@@ -73,7 +76,7 @@ namespace SimpleSynth.Synths
             // assemble the final wav
             foreach (NoteSegment segment in Interpretation.NoteSegments)
             {
-                DiscreteSignal segmentSignal = signalCache[segment.Identifier];
+                DiscreteSignal segmentSignal = signalCache[segment.ReuseIdentifier];
 
                 long startSample = segment.StartSample;
 
@@ -91,6 +94,15 @@ namespace SimpleSynth.Synths
             signal.ScaleAmplitude(0.9f); // adjust the samples to fit between [-1, 1] (using a value of 1 sometimes seems to cause clipping)
 
             OnProgressChanged(new GenerationProgressChangedEventArgs(4, 5, "Wave normalization", stopwatch.Elapsed));
+            stopwatch.Stop();
+
+            return signal;
+        }
+
+        public MemoryStream GenerateWAV()
+        {
+            var signal = GetSignal();
+
             stopwatch.Restart();
 
             MemoryStream output;

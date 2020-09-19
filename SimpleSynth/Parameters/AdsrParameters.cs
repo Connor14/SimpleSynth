@@ -9,9 +9,9 @@
         // short:   .01,            .02,        .015
         // medium:  .05,            .1,         .075
         // long:    .1,             .2,         .15
-        public static AdsrParameters Short = new AdsrParameters(0.01, 0.02, 1, 0.015, 1.5);
-        public static AdsrParameters Default = new AdsrParameters(0.05, 0.1, 1, 0.075, 1.5);
-        public static AdsrParameters Long = new AdsrParameters(0.1, 0.2, 1, 0.15, 1.5);
+        public static AdsrParameters Short => new AdsrParameters(0.01, 0.02, 1, 0.015, 1.5);
+        public static AdsrParameters Default => new AdsrParameters(0.05, 0.1, 1, 0.075, 1.5);
+        public static AdsrParameters Long => new AdsrParameters(0.1, 0.2, 1, 0.15, 1.5);
 
         /// <summary>
         /// The length of the Attack phase in seconds
@@ -63,6 +63,5 @@
             // Calculate the sustain duration
             return (totalDurationSeconds - (AttackDuration + DecayDuration + ReleaseDuration)) * SustainDurationFraction;
         }
-
     }
 }

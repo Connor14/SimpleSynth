@@ -1,6 +1,7 @@
 ﻿using MidiSharp;
 using MidiSharp.Events.Meta;
 using MidiSharp.Events.Voice.Note;
+using SimpleSynth.Providers;
 using SimpleSynth.Utilities;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,9 @@ using System.Text;
 
 namespace SimpleSynth.Parsing
 {
+    /// <summary>
+    /// Contains information about a parsed MIDI file.
+    /// </summary>
     public class MidiInterpretation
     {
         public MidiSequence MidiFile { get; private set; }
@@ -17,7 +21,12 @@ namespace SimpleSynth.Parsing
         public int TotalDurationSamples { get; private set; }
         public List<NoteSegment> NoteSegments { get; private set; }
 
-        public MidiInterpretation(Stream midiStream)
+        public MidiInterpretation(Stream midiStream) : this(midiStream, new DefaultNoteSegmentProvider())
+        {
+            
+        }
+
+        public MidiInterpretation(Stream midiStream, INoteSegmentProvider noteSegmentProvider)
         {
             MidiFile = MidiSequence.Open(midiStream);
 
@@ -54,13 +63,28 @@ namespace SimpleSynth.Parsing
                             onEvents[onNoteIdentifier] = new Queue<MidiEventWithTime<OnNoteVoiceMidiEvent>>();
                         }
 
-                        onEvents[onNoteIdentifier].Enqueue(new MidiEventWithTime<OnNoteVoiceMidiEvent>(time, onNote));
+                        // If the Velocity is 0, we are turning off a note using another OnNote (see https://stackoverflow.com/a/43322203/1984712)
+                        // Basically, if a NoteOn event is received with a velocity of 0, we effectively have a NoteOff event.
+                        if (onNote.Velocity == 0)
+                        {
+                            NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
+                                this,
+                                track,
+                                onEvents[onNoteIdentifier].Dequeue(), // Get the first matching On Event that matches this identifier
+                                new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, CreateOffNoteFromOnNote(onNote))
+                            ));
+                        }
+                        // Otherwise, queue the note so that an OffNote can match to it
+                        else
+                        {
+                            onEvents[onNoteIdentifier].Enqueue(new MidiEventWithTime<OnNoteVoiceMidiEvent>(time, onNote));
+                        }
                     }
                     else if (midiEvent is OffNoteVoiceMidiEvent offNote)
                     {
                         var offNoteIdentifer = (offNote.Channel, offNote.Note);
 
-                        NoteSegments.Add(new NoteSegment(
+                        NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
                             this,
                             track,
                             onEvents[offNoteIdentifer].Dequeue(), // Get the first matching On Event 
@@ -71,6 +95,14 @@ namespace SimpleSynth.Parsing
             }
 
             TotalDurationSamples = NoteSegments.Max(segment => segment.StartSample + segment.DurationSamples);
+        }
+
+        private OffNoteVoiceMidiEvent CreateOffNoteFromOnNote(OnNoteVoiceMidiEvent onNote)
+        {
+            if (onNote.Velocity != 0)
+                throw new Exception("The OnNoteVoiceMidiEvent used to create the artificial OffNoteVoiceMidiEvent MUST have a Velocity of 0.");
+
+            return new OffNoteVoiceMidiEvent(onNote.DeltaTime, onNote.Channel, onNote.Note, onNote.Velocity);
         }
     }
 }

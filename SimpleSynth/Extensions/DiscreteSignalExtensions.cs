@@ -6,7 +6,11 @@ namespace SimpleSynth.Extensions
 {
     public static class DiscreteSignalExtensions
     {
-        // Average two signals together
+        /// <summary>
+        /// Averages two signals together.
+        /// </summary>
+        /// <param name="mainSignal"></param>
+        /// <param name="signal"></param>
         public static void CombineAverage(this DiscreteSignal mainSignal, DiscreteSignal signal)
         {
             if (mainSignal.Samples.Length != signal.Samples.Length)
@@ -40,7 +44,11 @@ namespace SimpleSynth.Extensions
             }
         }
 
-        // Subtract the "signal" amplitudes from the "mainSignal" amplitudes
+        /// <summary>
+        /// Subtracts the "signal" amplitudes from the "mainSignal" amplitudes
+        /// </summary>
+        /// <param name="mainSignal"></param>
+        /// <param name="signal"></param>
         public static void CombineSubtract(this DiscreteSignal mainSignal, DiscreteSignal signal)
         {
             if (mainSignal.Samples.Length != signal.Samples.Length)
@@ -54,7 +62,11 @@ namespace SimpleSynth.Extensions
             }
         }
 
-        // Apply the ADSR envelope to the main signal
+        /// <summary>
+        /// Applies an ADSR envelope to mainSignal
+        /// </summary>
+        /// <param name="mainSignal"></param>
+        /// <param name="adsrSignal"></param>
         public static void ApplyAdsr(this DiscreteSignal mainSignal, DiscreteSignal adsrSignal)
         {
             if (mainSignal.Samples.Length != adsrSignal.Samples.Length)
