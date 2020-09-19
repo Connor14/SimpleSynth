@@ -67,12 +67,19 @@ namespace SimpleSynth.Parsing
                         // Basically, if a NoteOn event is received with a velocity of 0, we effectively have a NoteOff event.
                         if (onNote.Velocity == 0)
                         {
-                            NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
-                                this,
-                                track,
-                                onEvents[onNoteIdentifier].Dequeue(), // Get the first matching On Event that matches this identifier
-                                new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, CreateOffNoteFromOnNote(onNote))
-                            ));
+                            if (onEvents.TryGetValue(onNoteIdentifier, out var midiEventQueue))
+                            {
+                                NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
+                                    this,
+                                    track,
+                                    midiEventQueue.Dequeue(), // Get the first matching On Event that matches this identifier
+                                    new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, CreateOffNoteFromOnNote(onNote))
+                                ));
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine(string.Format("OnNote event with Velocity = 0 at [ Channel: {0}; Note: {1} ] is missing a corresponding OnNote event with Velocity > 0.", onNoteIdentifier.Channel, onNoteIdentifier.Note));
+                            }
                         }
                         // Otherwise, queue the note so that an OffNote can match to it
                         else
@@ -84,14 +91,24 @@ namespace SimpleSynth.Parsing
                     {
                         var offNoteIdentifer = (offNote.Channel, offNote.Note);
 
-                        NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
-                            this,
-                            track,
-                            onEvents[offNoteIdentifer].Dequeue(), // Get the first matching On Event 
-                            new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, offNote))
-                        );
+                        if(onEvents.TryGetValue(offNoteIdentifer, out var midiEventQueue))
+                        {
+                            NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
+                                this,
+                                track,
+                                midiEventQueue.Dequeue(), // Get the first matching On Event 
+                                new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, offNote))
+                            );
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine(string.Format("OffNote event at [ Channel: {0}; Note: {1} ] is missing a corresponding OnNote event.", offNoteIdentifer.Channel, offNoteIdentifer.Note));
+                        }
                     }
                 }
+
+                if (onEvents.Any(e => e.Value.Count > 0))
+                    System.Diagnostics.Debug.WriteLine("One or more OnNote events weren't paired with an OffNote event.");
             }
 
             TotalDurationSamples = NoteSegments.Max(segment => segment.StartSample + segment.DurationSamples);
