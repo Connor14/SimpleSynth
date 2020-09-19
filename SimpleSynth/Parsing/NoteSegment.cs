@@ -29,6 +29,8 @@ namespace SimpleSynth.Parsing
         /// </summary>
         public byte Note { get; }
 
+        public byte Velocity { get; }
+
         public MidiEventWithTime<OnNoteVoiceMidiEvent> NoteOnEvent { get; }
         public MidiEventWithTime<OffNoteVoiceMidiEvent> NoteOffEvent { get; }
 
@@ -54,6 +56,7 @@ namespace SimpleSynth.Parsing
             Track = track;
             Channel = noteOnEvent.MidiEvent.Channel;
             Note = noteOnEvent.MidiEvent.Note;
+            Velocity = noteOnEvent.MidiEvent.Velocity;
 
             NoteOnEvent = noteOnEvent;
             NoteOffEvent = noteOffEvent;

@@ -43,11 +43,13 @@ namespace SimpleSynth.Synths
                 mainSignal.CombineAdd(SignalHelper.GetSquare(melodicNoteSegment.Frequency, melodicNoteSegment.DurationSamples));
             }
 
-            // A simple way of doing an equalizer
-            // Scale the signals based on whether or not they lie within the given frequency range
-            float multiplier = BalanceProvider.GetMultiplier(segment);
+            float velocityMultiplier = segment.Velocity / 127f; // Velocity ranges from 0 - 127
 
-            mainSignal.Amplify(multiplier);
+            // A simple way of doing an equalizer
+            float balanceMultiplier = BalanceProvider.GetMultiplier(segment);
+
+            // Scale the signals based on their velocity and balance multipliers
+            mainSignal.Amplify(velocityMultiplier * balanceMultiplier);
             mainSignal.ApplyAdsr(AdsrEnvelopeProvider.CreateEnvelope(segment));
 
             return mainSignal;
