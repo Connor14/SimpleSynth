@@ -45,10 +45,10 @@ namespace SimpleSynth.Parsing
         public int DurationSamples { get; }
 
         public NoteSegment(
-            MidiInterpretation interpretation, 
             int track, 
             MidiEventWithTime<OnNoteVoiceMidiEvent> noteOnEvent, 
             MidiEventWithTime<OffNoteVoiceMidiEvent> noteOffEvent, 
+            int startSample,
             int durationSamples)
         {
             ReuseIdentifier = (track, noteOnEvent.MidiEvent.Channel, durationSamples, noteOnEvent.MidiEvent.Note);
@@ -61,7 +61,7 @@ namespace SimpleSynth.Parsing
             NoteOnEvent = noteOnEvent;
             NoteOffEvent = noteOffEvent;
 
-            StartSample = Conversions.ConvertTicksToSamples(interpretation.MicrosecondsPerTick, NoteOnEvent.Time);
+            StartSample = startSample;
             DurationSamples = durationSamples;
         }
     }

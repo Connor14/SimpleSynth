@@ -14,12 +14,12 @@ namespace SimpleSynth.Parsing
         public double Frequency { get; }
 
         public MelodicNoteSegment(
-            MidiInterpretation interpretation, 
             int track, 
             MidiEventWithTime<OnNoteVoiceMidiEvent> onNoteEvent, 
             MidiEventWithTime<OffNoteVoiceMidiEvent> offNoteEvent,
+            int startSample,
             int durationSamples) 
-            : base(interpretation, track, onNoteEvent, offNoteEvent, durationSamples)
+            : base(track, onNoteEvent, offNoteEvent, startSample, durationSamples)
         {
             Frequency = Conversions.NoteToFrequency(Note);
         }

@@ -23,13 +23,13 @@ namespace SimpleSynth.Parsing
         public PercussionType PercussionType { get; }
 
         public PercussionNoteSegment(
-            MidiInterpretation interpretation,
             int track,
             MidiEventWithTime<OnNoteVoiceMidiEvent> onNoteEvent,
             MidiEventWithTime<OffNoteVoiceMidiEvent> offNoteEvent,
+            int startSample,
             int durationSamples,
             GeneralMidiPercussion instrument)
-            : base(interpretation, track, onNoteEvent, offNoteEvent, durationSamples)
+            : base(track, onNoteEvent, offNoteEvent, startSample, durationSamples)
         {
             PercussionInstrument = instrument;
             PercussionType = PercussionHelper.GetPercussionType(instrument);

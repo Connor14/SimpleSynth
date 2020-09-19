@@ -16,26 +16,22 @@ namespace SimpleSynth.Parsing
     /// </summary>
     public class MidiInterpretation
     {
-        public MidiSequence MidiFile { get; private set; }
-        public double MicrosecondsPerTick { get; private set; }
-        public int TotalDurationSamples { get; private set; }
-        public List<NoteSegment> NoteSegments { get; private set; }
+        public MidiSequence MidiFile { get; }
+        public TempoCollection TempoCollection { get; }
+
+        public List<NoteSegment> NoteSegments { get; }
+        public int TotalDurationSamples { get; }
 
         public MidiInterpretation(Stream midiStream) : this(midiStream, new DefaultNoteSegmentProvider())
         {
-            
+
         }
 
         public MidiInterpretation(Stream midiStream, INoteSegmentProvider noteSegmentProvider)
         {
             MidiFile = MidiSequence.Open(midiStream);
 
-            TempoMetaMidiEvent tempoEvent = MidiFile.Tracks[0].OfType<TempoMetaMidiEvent>().First();
-
-            int ticksPerBeat = MidiFile.TicksPerBeatOrFrame;
-            int microsecondsPerBeat = tempoEvent.Value; // microseconds / beat
-
-            MicrosecondsPerTick = (double)microsecondsPerBeat / (double)ticksPerBeat;
+            TempoCollection = new TempoCollection(MidiFile.TicksPerBeatOrFrame);
 
             NoteSegments = new List<NoteSegment>();
 
@@ -46,6 +42,7 @@ namespace SimpleSynth.Parsing
                 // Key is a tuple of Channel and Note
                 var onEvents = new Dictionary<(byte Channel, int Note), Queue<MidiEventWithTime<OnNoteVoiceMidiEvent>>>();
 
+                // Time in ticks
                 long time = 0;
                 foreach (var midiEvent in MidiFile.Tracks[track].Events)
                 {
@@ -54,7 +51,11 @@ namespace SimpleSynth.Parsing
                         time += midiEvent.DeltaTime;
                     }
 
-                    if (midiEvent is OnNoteVoiceMidiEvent onNote)
+                    if (midiEvent is TempoMetaMidiEvent tempoEvent)
+                    {
+                        TempoCollection.AddTempoEvent(time, tempoEvent);
+                    }
+                    else if (midiEvent is OnNoteVoiceMidiEvent onNote)
                     {
                         var onNoteIdentifier = (onNote.Channel, onNote.Note);
 
@@ -70,7 +71,7 @@ namespace SimpleSynth.Parsing
                             if (onEvents.TryGetValue(onNoteIdentifier, out var midiEventQueue))
                             {
                                 NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
-                                    this,
+                                    TempoCollection,
                                     track,
                                     midiEventQueue.Dequeue(), // Get the first matching On Event that matches this identifier
                                     new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, CreateOffNoteFromOnNote(onNote))
@@ -91,10 +92,10 @@ namespace SimpleSynth.Parsing
                     {
                         var offNoteIdentifer = (offNote.Channel, offNote.Note);
 
-                        if(onEvents.TryGetValue(offNoteIdentifer, out var midiEventQueue))
+                        if (onEvents.TryGetValue(offNoteIdentifer, out var midiEventQueue))
                         {
                             NoteSegments.Add(noteSegmentProvider.CreateNoteSegment(
-                                this,
+                                TempoCollection,
                                 track,
                                 midiEventQueue.Dequeue(), // Get the first matching On Event 
                                 new MidiEventWithTime<OffNoteVoiceMidiEvent>(time, offNote))

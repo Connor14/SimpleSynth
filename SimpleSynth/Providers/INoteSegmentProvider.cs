@@ -14,11 +14,11 @@ namespace SimpleSynth.Providers
         /// <summary>
         /// Create a NoteSegment for the given parameters.
         /// </summary>
-        /// <param name="midiInterpretation"></param>
+        /// <param name="tempoCollection"></param>
         /// <param name="track"></param>
         /// <param name="onNoteEvent"></param>
         /// <param name="offNoteEvent"></param>
         /// <returns></returns>
-        NoteSegment CreateNoteSegment(MidiInterpretation midiInterpretation, int track, MidiEventWithTime<OnNoteVoiceMidiEvent> onNoteEvent, MidiEventWithTime<OffNoteVoiceMidiEvent> offNoteEvent);
+        NoteSegment CreateNoteSegment(TempoCollection tempoCollection, int track, MidiEventWithTime<OnNoteVoiceMidiEvent> onNoteEvent, MidiEventWithTime<OffNoteVoiceMidiEvent> offNoteEvent);
     }
 }
