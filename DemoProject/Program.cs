@@ -4,7 +4,6 @@ using SimpleSynth.Parsing;
 using SimpleSynth.Providers;
 using SimpleSynth.Synths;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 

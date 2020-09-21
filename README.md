@@ -5,9 +5,20 @@ Find it on NuGet: https://www.nuget.org/packages/SimpleSynth/
 
 ## About
 
-I created this project so that I had a simple way to create WAV files out of the MIDI files from the **AbundantMusic.NET** project (https://github.com/Connor14/AbundantMusic.NET). As of right now, it just synthesizes audio using a combination of a sine wave and a square wave (`BasicSynth`) or multiple harmonics of a sine wave (`HarmonicSynth`). Support for percussion synthesis was recently added to the `BasicSynth` class. 
+I created SimpleSynth so that I would have an easy way to create WAV audio files from MIDI files output by the **AbundantMusic.NET** project (https://github.com/Connor14/AbundantMusic.NET). I tried to design SimpleSynth with customization and extensibility in mind, so I am hopeful that users of the library will be able to tweak the generated audio to their liking by implementing new `Providers` or by extending `MidiSynth` and implementing new synthesizers.
 
-Overall, the system can be easily expanded to support more forms of synthesis.
+The included `BasicSynth` synthesizer creates audio using a combination of a sine wave and a square wave and supports basic percussion synthesis.
+
+## Features
+
+Beyond synthesizing the notes that make up the harmonies and melodies of MIDI files, SimpleSynth also supports the following:
+
+* Percussion synthesis
+  * Percussion instruments are generalized into one of four types (bass, snare, crash, ride) and are synthesized as such.
+* Dynamic tempo
+  * MIDI files can contain tempo changes and these changes will be reflected in the final audio output.
+* NoteOn event Velocity interpretation
+  * The Velocity value of a NoteOn MIDI event is used to amplify a note's sound to make it louder or softer when compared to its neighbors. The results might be audible in cases where accents are used, for example.
 
 ## Tools / Libraries
 
@@ -29,16 +40,23 @@ Create an instance of the `MidiInterpretation` class and pass it to an instance 
 using SimpleSynth.EventArguments;
 using SimpleSynth.Parameters;
 using SimpleSynth.Parsing;
+using SimpleSynth.Providers;
 using SimpleSynth.Synths;
 using System;
 using System.IO;
 ...
 using (var stream = File.OpenRead("YourMidiFile.mid"))
 {
-    var interpretation = new MidiInterpretation(stream);
-    MidiSynth synth = new BasicSynth(interpretation, AdsrParameters.Default);
+    // Parse the provided MIDI file.
+    var interpretation = new MidiInterpretation(stream, new DefaultNoteSegmentProvider());
+
+    // Create a new synthesizer with default providers.
+    var synth = new BasicSynth(interpretation, new DefaultAdsrEnvelopeProvider(AdsrParameters.Short), new DefaultBalanceProvider());
+
+    // Generate the WAV file
     MemoryStream result = synth.GenerateWAV();
 
+    // Write WAV file to disk
     using (var outputStream = File.OpenWrite("YourOutputWave.wav"))
     {
         result.CopyTo(outputStream);
