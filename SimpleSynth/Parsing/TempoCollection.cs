@@ -21,6 +21,12 @@ namespace SimpleSynth.Parsing
 
         public void AddTempoEvent(long time, TempoMetaMidiEvent tempoEvent)
         {
+            if (TempoEvents.ContainsKey(time))
+            {
+                System.Diagnostics.Debug.WriteLine(string.Format("TempoEvent at time {0} already exists.", time));
+                return;
+            }
+
             TempoEvents.Add(time, tempoEvent);
         }
 
