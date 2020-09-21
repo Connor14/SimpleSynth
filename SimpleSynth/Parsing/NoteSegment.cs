@@ -18,7 +18,7 @@ namespace SimpleSynth.Parsing
         /// 
         /// This does NOT uniquely identify a note. Rather, it is used to determine if a note can be reused. 
         /// </summary>
-        public (int Track, byte Channel, int DurationSamples, byte Note) ReuseIdentifier { get; }
+        public (int Track, byte Channel, int DurationSamples, byte Note, byte Velocity) ReuseIdentifier { get; }
 
         public int Track { get; }
 
@@ -51,7 +51,7 @@ namespace SimpleSynth.Parsing
             int startSample,
             int durationSamples)
         {
-            ReuseIdentifier = (track, noteOnEvent.MidiEvent.Channel, durationSamples, noteOnEvent.MidiEvent.Note);
+            ReuseIdentifier = (track, noteOnEvent.MidiEvent.Channel, durationSamples, noteOnEvent.MidiEvent.Note, noteOnEvent.MidiEvent.Velocity);
 
             Track = track;
             Channel = noteOnEvent.MidiEvent.Channel;

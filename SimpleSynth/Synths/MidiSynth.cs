@@ -38,7 +38,7 @@ namespace SimpleSynth.Synths
             stopwatch.Restart();
 
             // unique NoteSegments
-            Dictionary<(int Track, byte Channel, int DurationSamples, byte Note), NoteSegment> noteSegmentsToRender = new Dictionary<(int Track, byte Channel, int DurationSamples, byte Note), NoteSegment>();
+            Dictionary<(int Track, byte Channel, int DurationSamples, byte Note, byte Velocity), NoteSegment> noteSegmentsToRender = new Dictionary<(int Track, byte Channel, int DurationSamples, byte Note, byte Velocity), NoteSegment>();
 
             // find unique note segments
             foreach (var segment in Interpretation.NoteSegments)
@@ -57,7 +57,7 @@ namespace SimpleSynth.Synths
             int totalToRender = noteSegmentsToRender.Count;
 
             // unique DiscreteSignals
-            ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note), DiscreteSignal> signalCache = new ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note), DiscreteSignal>();
+            ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note, byte Velocity), DiscreteSignal> signalCache = new ConcurrentDictionary<(int Track, byte Channel, int DurationSamples, byte Note, byte Velocity), DiscreteSignal>();
 
             // generate unique signals in parallel
             Parallel.ForEach(noteSegmentsToRender, segment =>
