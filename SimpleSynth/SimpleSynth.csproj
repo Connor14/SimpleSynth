@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Authors>Connor14</Authors>
     <Company>Connor14</Company>
     <PackageProjectUrl>https://github.com/Connor14/SimpleSynth</PackageProjectUrl>
@@ -10,7 +10,11 @@
     <Description>A simple C# library that can read a MIDI file and spit out a WAV file.</Description>
     <Copyright>2019 Connor Schmidt</Copyright>
     <PackageTags>audio, music, midi, wav, synth, synthesizer</PackageTags>
-    <PackageReleaseNotes>* Reduced target framework to netstandard2.0. 
+    <PackageReleaseNotes>[2.0.1]
+* Added Velocity to the NoteSegment ResuseIdentifier so that notes that differ only in Velocity will actually be rendered separately.
+
+[2.0.0]
+* Reduced target framework to netstandard2.0. 
 * Significantly refactored the system and improved extensibility. 
 * Added basic percussion synthesis.
 * Added ability to interpret tempo changes.</PackageReleaseNotes>
