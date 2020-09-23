@@ -20,6 +20,10 @@ Beyond synthesizing the notes that make up the harmonies and melodies of MIDI fi
 * NoteOn event Velocity interpretation
   * The Velocity value of a NoteOn MIDI event is used to amplify a note's sound to make it louder or softer when compared to its neighbors. The results might be audible in cases where accents are used, for example.
 
+## Samples
+
+Please see the [Samples](./Samples) directory for sample audio.
+
 ## Tools / Libraries
 
 ##### SimpleSynth
